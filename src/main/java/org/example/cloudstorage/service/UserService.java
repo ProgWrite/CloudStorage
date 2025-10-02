@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.cloudstorage.dto.UserRegistrationRequestDto;
 import org.example.cloudstorage.dto.UserResponseDto;
+import org.example.cloudstorage.exception.UserExistsException;
 import org.example.cloudstorage.mapper.UserMapper;
 import org.example.cloudstorage.model.User;
 import org.example.cloudstorage.repository.UserRepository;
@@ -44,10 +45,14 @@ public class UserService implements UserDetailsService {
 
     @Transactional
     public UserResponseDto create(UserRegistrationRequestDto userRegistrationRequestDto){
+        String username = userRegistrationRequestDto.getUsername();
+        if(userRepository.findByUsername(username).isPresent()){
+            throw new UserExistsException("Username already exists with username: " + username);
+        }
+
         User user = UserMapper.INSTANCE.toEntity(userRegistrationRequestDto);
         String encodedPassword = passwordEncoder.encode(user.getPassword());
         user.setPassword(encodedPassword);
-
         User savedUser = userRepository.save(user);
         log.info("User created with id: {}", savedUser.getId());
         return UserMapper.INSTANCE.toResponseDto(savedUser);
