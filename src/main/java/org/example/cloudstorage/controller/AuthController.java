@@ -4,8 +4,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.cloudstorage.dto.UserRequestDto;
+import org.example.cloudstorage.dto.UserAuthorizationRequestDto;
+import org.example.cloudstorage.dto.UserRegistrationRequestDto;
 import org.example.cloudstorage.dto.UserResponseDto;
+import org.example.cloudstorage.service.UserService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -26,9 +29,13 @@ public class AuthController {
 
     private final SecurityContextRepository securityContextRepository;
     private final AuthenticationManager authenticationManager;
+    private final UserService userService;
 
+
+
+    //TODO Этот метод надо будет улучшить (пересмотреть возможно)!
     @PostMapping("/sign-in")
-    public ResponseEntity<UserResponseDto> signIn(@RequestBody UserRequestDto user, HttpServletRequest request,
+    public ResponseEntity<UserResponseDto> signIn(@RequestBody UserAuthorizationRequestDto user, HttpServletRequest request,
                                                   HttpServletResponse response) {
         log.info("Attempting authentication for user: {}", user.getUsername());
         Authentication authentication = authenticationManager.authenticate(
@@ -42,4 +49,16 @@ public class AuthController {
         UserResponseDto responseDto = new UserResponseDto(user.getUsername());
         return ResponseEntity.ok(responseDto);
     }
+
+    @PostMapping("/sign-up")
+    public ResponseEntity<UserResponseDto> signUp(@RequestBody UserRegistrationRequestDto user,
+                                                  HttpServletRequest request,
+                                                  HttpServletResponse response) {
+
+        log.info("Attempting registration for user: {}", user.getUsername());
+        UserResponseDto responseDto =    userService.create(user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
+    }
+
+
 }
