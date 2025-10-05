@@ -42,12 +42,11 @@ public class AuthController {
         return ResponseEntity.ok(responseDto);
     }
 
-
     @PostMapping("/sign-up")
     public ResponseEntity<UserResponseDto> signUp(@Valid @RequestBody UserRegistrationRequestDto user, HttpServletRequest request,
                                                   HttpServletResponse response) {
         log.info("Attempting registration for user: {}", user.getUsername());
-        UserResponseDto responseDto =    userService.create(user);
+        UserResponseDto responseDto = userService.create(user);
         authenticateUser(user.getUsername(), user.getPassword(), request, response);
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }

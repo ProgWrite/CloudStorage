@@ -5,6 +5,8 @@ import org.example.cloudstorage.dto.ErrorResponseDto;
 import org.example.cloudstorage.exception.UserExistsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
@@ -26,6 +28,21 @@ public class GlobalExceptionHandler {
         ErrorResponseDto error = buildError(exception);
         return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
+
+    @ExceptionHandler(InternalAuthenticationServiceException.class)
+    public ResponseEntity<ErrorResponseDto> userNotFound(InternalAuthenticationServiceException exception){
+        log.warn("USER NOT FOUND");
+        ErrorResponseDto error = buildError(exception);
+        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ErrorResponseDto> wrongPassword(BadCredentialsException exception){
+        log.warn("USER NOT FOUND");
+        ErrorResponseDto error = buildError(exception);
+        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+    }
+
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponseDto> handleValidationErrors(MethodArgumentNotValidException exception) {

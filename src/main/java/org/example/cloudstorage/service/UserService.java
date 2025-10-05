@@ -8,6 +8,7 @@ import org.example.cloudstorage.exception.UserExistsException;
 import org.example.cloudstorage.mapper.UserMapper;
 import org.example.cloudstorage.model.User;
 import org.example.cloudstorage.repository.UserRepository;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -25,29 +26,28 @@ public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Transactional(readOnly = true)
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        log.info("=== TRYING TO LOAD USER: {} ===", username);
+        @Transactional(readOnly = true)
+        @Override
+        public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+            log.info("=== TRYING TO LOAD USER: {} ===", username);
 
-        //TODO по хорошему надо дто здесь!
-        return userRepository.findByUsername(username)
-                .map(user -> new org.springframework.security.core.userdetails.User(
-                        user.getUsername(),
-                        user.getPassword(),
-                        Collections.emptyList()
-                ))
-                .orElseThrow(() -> {
-                    log.error("USER NOT FOUND: {}", username);
-                    return new UsernameNotFoundException("Failed to load user: " + username);
-                });
-    }
+            //TODO по хорошему надо дто здесь!
+            return userRepository.findByUsername(username)
+                    .map(user -> new org.springframework.security.core.userdetails.User(
+                            user.getUsername(),
+                            user.getPassword(),
+                            Collections.emptyList()
+                    ))
+                    .orElseThrow(() -> {
+                        throw new BadCredentialsException("Bad credentials");
+                    });
+        }
 
     @Transactional
     public UserResponseDto create(UserRegistrationRequestDto userRegistrationRequestDto){
         String username = userRegistrationRequestDto.getUsername();
         if(userRepository.findByUsername(username).isPresent()){
-            throw new UserExistsException("Username already exists with username: " + username);
+            throw new UserExistsException("Username already exists with username:");
         }
 
         User user = UserMapper.INSTANCE.toEntity(userRegistrationRequestDto);
