@@ -37,24 +37,29 @@ public class AuthController {
     public ResponseEntity<UserResponseDto> signIn(@RequestBody UserAuthorizationRequestDto user, HttpServletRequest request,
                                                   HttpServletResponse response) {
         log.info("Attempting authentication for user: {}", user.getUsername());
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
-
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(authentication);
-        SecurityContextHolder.setContext(context);
-        securityContextRepository.saveContext(context, request, response);
-
+        authenticateUser(user.getUsername(), user.getPassword(), request, response);
         UserResponseDto responseDto = new UserResponseDto(user.getUsername());
         return ResponseEntity.ok(responseDto);
     }
 
-    //TODO регистрация должна делать моментальную аутентификацию
+
     @PostMapping("/sign-up")
-    public ResponseEntity<UserResponseDto> signUp(@Valid @RequestBody UserRegistrationRequestDto user) {
+    public ResponseEntity<UserResponseDto> signUp(@Valid @RequestBody UserRegistrationRequestDto user, HttpServletRequest request,
+                                                  HttpServletResponse response) {
         log.info("Attempting registration for user: {}", user.getUsername());
         UserResponseDto responseDto =    userService.create(user);
+        authenticateUser(user.getUsername(), user.getPassword(), request, response);
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
+    }
+
+    private void authenticateUser(String username, String password, HttpServletRequest request,
+                                  HttpServletResponse response) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(username, password));
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authentication);
+        SecurityContextHolder.setContext(context);
+        securityContextRepository.saveContext(context, request, response);
     }
 
 }
