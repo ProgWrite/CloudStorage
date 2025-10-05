@@ -16,6 +16,18 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   web:
     locale: en
+  data:
+    redis:
+      host: localhost
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+
+  session:
+    store-type: redis
+    timeout: 30m
+    redis:
+      flush-mode: on_save
+      namespace: spring:session
 
 server:
   port: 8080
@@ -24,20 +36,19 @@ logging:
   level:
     org.hibernate.SQL: DEBUG
     org.springframework.security: DEBUG
-
+    org.springframework.session: DEBUG
+    org.springframework.data.redis: DEBUG
 
 ---
 spring:
   config:
     activate:
       on-profile: docker
-
   datasource:
     url: jdbc:postgresql://db:5432/${DB_NAME:postgres}
     username: ${DB_USER:postgres}
     password: ${DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
-
   jpa:
     hibernate:
       ddl-auto: validate
@@ -46,10 +57,23 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+  session:
+    store-type: redis
+    timeout: 30m
+    redis:
+      flush-mode: on_save
+      namespace: spring:session
+  data:
+    redis:
+      host: redis
+      port: 6379
+      password: ${REDIS_PASSWORD}
   liquibase:
     enabled: true
     change-log: classpath:db/changelog/db.changelog-master.yaml
 
+server:
+  port: 8080
 
 logging:
   level:

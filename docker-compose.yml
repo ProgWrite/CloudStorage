@@ -12,6 +12,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
 
   db:
@@ -32,5 +34,23 @@ services:
       timeout: 5s
       retries: 10
 
+  redis:
+    image: 'redis:latest'
+    container_name: container-session-redis
+    ports:
+      - "${REDIS_PORT}:6379"
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+        test: [ "CMD", "redis-cli", "--pass", "${REDIS_PASSWORD}", "ping" ]
+        interval: 5s
+        timeout: 3s
+        retries: 5
+
 volumes:
   postgres_data:
+  redis_data:
