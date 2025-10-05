@@ -2,6 +2,7 @@ package org.example.cloudstorage.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +12,7 @@ import org.example.cloudstorage.dto.UserResponseDto;
 import org.example.cloudstorage.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -49,6 +51,22 @@ public class AuthController {
         UserResponseDto responseDto = userService.create(user);
         authenticateUser(user.getUsername(), user.getPassword(), request, response);
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
+    }
+
+    @PostMapping("/sign-out")
+    public ResponseEntity<UserResponseDto> signOut(HttpServletRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication instanceof AnonymousAuthenticationToken) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        SecurityContextHolder.clearContext();
+        HttpSession session = request.getSession(false);
+        if(session != null) {
+            session.invalidate();
+        }
+        log.info("User logged out. Session invalidated.");
+        return ResponseEntity.noContent().build();
     }
 
     private void authenticateUser(String username, String password, HttpServletRequest request,
