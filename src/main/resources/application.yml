@@ -2,6 +2,7 @@ spring:
   config:
     activate:
       on-profile: default
+
   datasource:
     url: jdbc:postgresql://localhost:5433/${DB_NAME}
     username: ${DB_USER}
@@ -21,13 +22,6 @@ spring:
       host: localhost
       port: ${REDIS_PORT}
       password: ${REDIS_PASSWORD}
-
-  session:
-    store-type: redis
-    timeout: 30m
-    redis:
-      flush-mode: on_save
-      namespace: spring:session
 
 server:
   port: 8080
@@ -57,16 +51,10 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
-  session:
-    store-type: redis
-    timeout: 30m
-    redis:
-      flush-mode: on_save
-      namespace: spring:session
   data:
     redis:
       host: redis
-      port: 6379
+      port: ${REDIS_PORT}
       password: ${REDIS_PASSWORD}
   liquibase:
     enabled: true
