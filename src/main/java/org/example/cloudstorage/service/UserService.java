@@ -16,8 +16,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -31,23 +29,16 @@ public class UserService implements UserDetailsService {
         public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
             log.info("=== TRYING TO LOAD USER: {} ===", username);
 
-            //TODO по хорошему надо дто здесь!
             return userRepository.findByUsername(username)
-                    .map(user -> new org.springframework.security.core.userdetails.User(
-                            user.getUsername(),
-                            user.getPassword(),
-                            Collections.emptyList()
-                    ))
-                    .orElseThrow(() -> {
-                        throw new BadCredentialsException("Bad credentials");
-                    });
+                    .map(UserMapper.INSTANCE::toUserDetails)
+                    .orElseThrow(() -> new BadCredentialsException("Bad credentials"));
         }
 
     @Transactional
     public UserResponseDto create(UserRegistrationRequestDto userRegistrationRequestDto){
         String username = userRegistrationRequestDto.getUsername();
         if(userRepository.findByUsername(username).isPresent()){
-            throw new UserExistsException("Username already exists with username:");
+            throw new UserExistsException("Username already exists");
         }
 
         User user = UserMapper.INSTANCE.toEntity(userRegistrationRequestDto);

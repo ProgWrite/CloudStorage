@@ -17,4 +17,13 @@ public interface UserMapper {
 
     UserResponseDto toResponseDto(User user);
 
+    default org.springframework.security.core.userdetails.User toUserDetails(User user) {
+        return new org.springframework.security.core.userdetails.User(
+                user.getUsername(),
+                user.getPassword(),
+                java.util.Collections.emptyList()
+        );
+    }
+
+
 }
