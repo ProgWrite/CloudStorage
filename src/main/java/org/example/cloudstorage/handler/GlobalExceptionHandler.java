@@ -1,9 +1,13 @@
 package org.example.cloudstorage.handler;
 
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.example.cloudstorage.dto.ErrorResponseDto;
 import org.example.cloudstorage.exception.UserExistsException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
@@ -12,6 +16,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.ArrayList;
@@ -53,6 +58,15 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ApiResponse(
+            description = "Internal server error",
+            responseCode = "500",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = ErrorResponseDto.class)
+            )
+    )
     public ResponseEntity<ErrorResponseDto> handleAllExceptions(Exception ex) {
         log.error("Internal error: {}", ex.getMessage(), ex);
         ErrorResponseDto error = new ErrorResponseDto(

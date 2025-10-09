@@ -31,12 +31,19 @@ public class SecurityConfiguration {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/", "/index.html", "/static/**", "/favicon.ico", "/manifest.json", "/assets/**", "/config.js").permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/auth/sign-in").permitAll()
+                        .requestMatchers("/api/auth/sign-up").permitAll()
+                        .requestMatchers("/v3/api-docs/**").permitAll()
+                        .requestMatchers("/swagger-ui/**").permitAll()
+                        .requestMatchers("/swagger-ui.html").permitAll()
+                        .requestMatchers("/webjars/**").permitAll()
+                        .requestMatchers("/swagger-resources/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                         .maximumSessions(MAX_SESSIONS_PER_USER))
+                .requestCache(requestCache -> requestCache.disable())
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .exceptionHandling(eh -> eh.authenticationEntryPoint((request, response, authException) -> {
