@@ -20,7 +20,7 @@ spring:
   data:
     redis:
       host: localhost
-      port: ${REDIS_PORT}
+      port: 6379
       password: ${REDIS_PASSWORD}
 
 server:
@@ -32,6 +32,12 @@ logging:
     org.springframework.security: DEBUG
     org.springframework.session: DEBUG
     org.springframework.data.redis: DEBUG
+
+minio:
+  url: ${MINIO_URL}
+  access-key: ${MINIO_USER}
+  secret-key: ${MINIO_PASSWORD}
+
 
 ---
 spring:
@@ -54,7 +60,7 @@ spring:
   data:
     redis:
       host: redis
-      port: ${REDIS_PORT}
+      port: 6379
       password: ${REDIS_PASSWORD}
   liquibase:
     enabled: true
@@ -62,6 +68,11 @@ spring:
 
 server:
   port: 8080
+
+minio:
+  url: ${MINIO_URL}
+  access-key: ${MINIO_USER}
+  secret-key: ${MINIO_PASSWORD}
 
 logging:
   level:
