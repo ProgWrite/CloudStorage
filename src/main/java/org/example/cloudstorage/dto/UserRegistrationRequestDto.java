@@ -12,7 +12,7 @@ import org.example.cloudstorage.validation.PasswordMatches;
 @Setter
 @ToString
 //TODO эта аннотация вроде мешает работать фронтенду. Пока что не знаю почему.
-@PasswordMatches
+//@PasswordMatches
 public class UserRegistrationRequestDto {
 
     @NotBlank(message = "Tne username can't be blank")

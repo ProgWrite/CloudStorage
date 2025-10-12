@@ -16,6 +16,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestConstructor;
 import org.springframework.transaction.annotation.Transactional;
+import org.testcontainers.containers.MinIOContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -24,7 +25,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-
+//TODO навести порядок в этом классе. Конфиг вынести!!!
 @Testcontainers
 @ActiveProfiles("test")
 @SpringBootTest
@@ -36,16 +37,30 @@ public class UserServiceIT {
     private final UserService userService;
     private final Validator validator;
     private final static int TOO_LONG_PASSWORD_SIZE = 21;
+    private static final String MINIO_USERNAME = "minioadmin";
+    private static final String MINIO_PASSWORD = "minioadmin";
 
     @Container
     private static final PostgreSQLContainer<?> container = new PostgreSQLContainer<>("postgres:latest");
+
+    @Container
+    private static final MinIOContainer minioContainer =
+            new MinIOContainer("minio/minio:latest")
+                    .withUserName(MINIO_USERNAME)
+                    .withPassword(MINIO_PASSWORD);
 
     @DynamicPropertySource
     static void postgresProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", container::getJdbcUrl);
         registry.add("spring.datasource.username", container::getUsername);
         registry.add("spring.datasource.password", container::getPassword);
+
+        registry.add("MINIO_URL", minioContainer::getS3URL);
+        registry.add("MINIO_USER", minioContainer::getUserName);
+        registry.add("MINIO_PASSWORD", minioContainer::getPassword);
+        registry.add("MINIO_BUCKET_NAME", () -> "test-bucket");
     }
+
 
     @Test
     void shouldCreateUser(){
