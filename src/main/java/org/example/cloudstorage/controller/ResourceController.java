@@ -1,7 +1,7 @@
 package org.example.cloudstorage.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.example.cloudstorage.dto.DirectoryResponseDto;
+import org.example.cloudstorage.dto.FileSystemItemResponseDto;
 import org.example.cloudstorage.model.User;
 import org.example.cloudstorage.repository.UserRepository;
 import org.example.cloudstorage.service.ResourceService;
@@ -23,12 +23,12 @@ public class ResourceController {
     private final UserRepository userRepository;
 
     @PostMapping("/resource")
-    public ResponseEntity<List<DirectoryResponseDto>>uploadResource(@RequestParam String path,
-                                                              @RequestPart("object") MultipartFile[] file,
-                                                              @AuthenticationPrincipal UserDetails userDetails){
+    public ResponseEntity<List<FileSystemItemResponseDto>>uploadResource(@RequestParam String path,
+                                                                         @RequestPart("object") MultipartFile[] file,
+                                                                         @AuthenticationPrincipal UserDetails userDetails){
         Optional<User> user  = userRepository.findByUsername(userDetails.getUsername());
         Long id = user.get().getId();
-        List<DirectoryResponseDto> filesDto = resourceService.upload(id, path, file);
+        List<FileSystemItemResponseDto> filesDto = resourceService.upload(id, path, file);
         return ResponseEntity.status(HttpStatus.CREATED).body(filesDto);
     }
 

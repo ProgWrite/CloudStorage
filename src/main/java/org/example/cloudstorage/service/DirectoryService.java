@@ -3,9 +3,9 @@ package org.example.cloudstorage.service;
 import io.minio.Result;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
-import org.example.cloudstorage.dto.DirectoryResponseDto;
+import org.example.cloudstorage.dto.FileSystemItemResponseDto;
 import org.example.cloudstorage.dto.ResourceType;
-import org.example.cloudstorage.mapper.DirectoryMapper;
+import org.example.cloudstorage.mapper.FileSystemItemMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -25,19 +25,20 @@ public class DirectoryService {
         minioClientService.putRootDirectory(id);
     }
 
-    public DirectoryResponseDto createDirectory(Long id, String path){
+    public FileSystemItemResponseDto createDirectory(Long id, String path){
         minioClientService.putDirectory(id, path);
         String truePath = buildPathForBackend(path);
         String folderName = extractFolderName(path, false);
-        return new DirectoryResponseDto(truePath, folderName, null, ResourceType.DIRECTORY);
+        return new FileSystemItemResponseDto(truePath, folderName, null, ResourceType.DIRECTORY);
     }
 
-    public List<DirectoryResponseDto>getDirectory(Long id, String path){
+    //TODO тут нужно определять файл или папка!!!
+    public List<FileSystemItemResponseDto>getDirectory(Long id, String path){
         Iterable<Result<Item>> minioObjects = minioClientService.getListObjects(id, path);
         List<Item> items = extractAndFilterItemsFromMinio(minioObjects, id, path);
 
         return items.stream()
-                .map(item -> DirectoryMapper.INSTANCE.itemToDto(item,path))
+                .map(item -> FileSystemItemMapper.INSTANCE.itemToDto(item,path))
                 .collect(Collectors.toList());
     }
 

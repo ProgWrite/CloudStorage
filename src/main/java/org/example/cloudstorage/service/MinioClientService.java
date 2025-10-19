@@ -58,16 +58,7 @@ public class MinioClientService {
         }
     }
 
-
-    //TODO почитать о PathReversal.
-    public Iterable<Result<Item>> getListObjects(Long id, String path) {
-        return minioClient.listObjects(ListObjectsArgs.builder()
-                        .bucket(bucketName)
-                        .prefix(buildRootPath(id) + path)
-                        .build());
-    }
-
-    //TODO надо будет кастомное исключение
+    //TODO надо будет кастомное исключение (соединить с предыдущим методом).
     public void putFile(Long id, String path, MultipartFile file) {
         try {
             minioClient.putObject(
@@ -79,8 +70,19 @@ public class MinioClientService {
                             .build()
             );
         } catch (IOException | GeneralSecurityException | MinioException exception) {
-            throw new RuntimeException("Error creating Folder", exception);
+            throw new RuntimeException("Error creating File", exception);
         }
     }
+
+
+    //TODO почитать о PathReversal.
+    public Iterable<Result<Item>> getListObjects(Long id, String path) {
+        return minioClient.listObjects(ListObjectsArgs.builder()
+                        .bucket(bucketName)
+                        .prefix(buildRootPath(id) + path)
+                        .build());
+    }
+
+
 
 }
