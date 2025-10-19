@@ -17,7 +17,7 @@ import org.example.cloudstorage.dto.ErrorResponseDto;
 import org.example.cloudstorage.dto.UserAuthorizationRequestDto;
 import org.example.cloudstorage.dto.UserRegistrationRequestDto;
 import org.example.cloudstorage.dto.UserResponseDto;
-import org.example.cloudstorage.service.FileService;
+import org.example.cloudstorage.service.DirectoryService;
 import org.example.cloudstorage.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -48,7 +48,7 @@ public class AuthController {
     private final SecurityContextRepository securityContextRepository;
     private final AuthenticationManager authenticationManager;
     private final UserService userService;
-    private final FileService fileService;
+    private final DirectoryService directoryService;
 
 
     @Operation(
@@ -147,7 +147,7 @@ public class AuthController {
         log.info("Attempting registration for user: {}", user.getUsername());
         UserResponseDto responseDto = userService.create(user);
         authenticateUser(user.getUsername(), user.getPassword(), request, response);
-        fileService.createRootFolder(responseDto.id());
+        directoryService.createRootDirectory(responseDto.id());
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
 
