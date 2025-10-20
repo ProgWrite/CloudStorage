@@ -83,6 +83,17 @@ public class MinioClientService {
                         .build());
     }
 
-
+    //TODO надо будет кастомное исключение
+    public StatObjectResponse statObject(Long id, String path){
+        try{
+            return minioClient.statObject(
+                    StatObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(buildRootPath(id) +path)
+                            .build());
+        } catch (IOException | GeneralSecurityException | MinioException exception) {
+            throw new RuntimeException("Error get information about resource", exception);
+        }
+    }
 
 }

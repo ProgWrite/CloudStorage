@@ -22,6 +22,7 @@ public class ResourceController {
     private final ResourceService resourceService;
     private final UserRepository userRepository;
 
+    //TODO первые 2 строки кода повторяются везде. Из-за того что приходится вытаскивать id. Подумай как оптимизировать это.
     @PostMapping("/resource")
     public ResponseEntity<List<FileSystemItemResponseDto>>uploadResource(@RequestParam String path,
                                                                          @RequestPart("object") MultipartFile[] file,
@@ -31,5 +32,16 @@ public class ResourceController {
         List<FileSystemItemResponseDto> filesDto = resourceService.upload(id, path, file);
         return ResponseEntity.status(HttpStatus.CREATED).body(filesDto);
     }
+
+    @GetMapping("/resource")
+    public ResponseEntity<FileSystemItemResponseDto> getResourceInfo(@RequestParam String path,
+                                                                     @AuthenticationPrincipal UserDetails userDetails){
+        Optional<User> user  = userRepository.findByUsername(userDetails.getUsername());
+        Long id = user.get().getId();
+        FileSystemItemResponseDto resource = resourceService.getResourceInfo(id, path);
+        return ResponseEntity.status(HttpStatus.OK).body(resource);
+    }
+
+
 
 }

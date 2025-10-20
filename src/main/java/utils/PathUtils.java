@@ -28,4 +28,8 @@ public class PathUtils {
         return isTrailingSlash ? folderName + "/" : folderName;
     }
 
+    public static String deleteRootPath(String path, Long id){
+        return path.replace("user-"+id+"-files/","");
+    }
+
 }
