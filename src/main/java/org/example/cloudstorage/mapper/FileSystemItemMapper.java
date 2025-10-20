@@ -9,7 +9,7 @@ import org.mapstruct.Named;
 import org.mapstruct.factory.Mappers;
 import utils.PathUtils;
 
-//TODO переименовать,так как тут не только Directory но и файлы!!!
+
 @Mapper
 public interface FileSystemItemMapper {
     Long EMPTY_FOLDER_SIZE = 0L;

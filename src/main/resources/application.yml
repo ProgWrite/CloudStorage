@@ -82,6 +82,7 @@ minio:
 logging:
   level:
     liquibase: DEBUG
+    org.springframework.core.env: DEBUG
 
-springdoc:
-  override-with-generic-response: false
+  springdoc:
+    override-with-generic-response: false

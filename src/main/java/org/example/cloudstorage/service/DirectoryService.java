@@ -32,7 +32,7 @@ public class DirectoryService {
         return new FileSystemItemResponseDto(truePath, folderName, null, ResourceType.DIRECTORY);
     }
 
-    //TODO тут нужно определять файл или папка!!!
+
     public List<FileSystemItemResponseDto>getDirectory(Long id, String path){
         Iterable<Result<Item>> minioObjects = minioClientService.getListObjects(id, path);
         List<Item> items = extractAndFilterItemsFromMinio(minioObjects, id, path);
