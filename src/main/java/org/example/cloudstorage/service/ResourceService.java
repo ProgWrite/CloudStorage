@@ -4,6 +4,7 @@ import io.minio.StatObjectResponse;
 import lombok.RequiredArgsConstructor;
 import org.example.cloudstorage.dto.FileSystemItemResponseDto;
 import org.example.cloudstorage.dto.ResourceType;
+import org.example.cloudstorage.exception.InvalidPathException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import utils.PathUtils;
@@ -11,14 +12,14 @@ import utils.PathUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-import static utils.PathUtils.deleteRootPath;
-import static utils.PathUtils.extractFolderName;
+import static utils.PathUtils.*;
 
 @Service
 @RequiredArgsConstructor
 public class ResourceService {
 
     private final MinioClientService minioClientService;
+
 
     public List<FileSystemItemResponseDto> upload(Long id, String path, MultipartFile[] files){
        List<FileSystemItemResponseDto> directories = new ArrayList<>();
@@ -39,6 +40,11 @@ public class ResourceService {
 
     //TODO возможно можно сделать общий buildDto для 2 методов
     public FileSystemItemResponseDto getResourceInfo(Long id, String path){
+        String backendPath = buildPathForBackend(path);
+
+        if(!minioClientService.isPathExists(id, backendPath)){
+            throw new InvalidPathException("path does not exist");
+        }
         StatObjectResponse object =  minioClientService.statObject(id, path);
         return buildDto(object, id);
     }

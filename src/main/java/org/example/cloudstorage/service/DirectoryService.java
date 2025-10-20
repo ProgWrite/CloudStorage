@@ -5,6 +5,7 @@ import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.example.cloudstorage.dto.FileSystemItemResponseDto;
 import org.example.cloudstorage.dto.ResourceType;
+import org.example.cloudstorage.exception.InvalidPathException;
 import org.example.cloudstorage.mapper.FileSystemItemMapper;
 import org.springframework.stereotype.Service;
 

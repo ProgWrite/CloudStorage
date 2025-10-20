@@ -96,4 +96,14 @@ public class MinioClientService {
         }
     }
 
+    public boolean isPathExists(Long id, String path){
+        Iterable<Result<Item>> results = minioClient.listObjects(ListObjectsArgs.builder()
+                        .bucket(bucketName)
+                        .prefix(buildRootPath(id) + path)
+                        .maxKeys(1)
+                        .build()
+        );
+        return results.iterator().hasNext();
+    }
+
 }

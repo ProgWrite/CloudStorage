@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.example.cloudstorage.dto.ErrorResponseDto;
+import org.example.cloudstorage.exception.InvalidPathException;
 import org.example.cloudstorage.exception.UserExistsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -56,6 +57,16 @@ public class GlobalExceptionHandler {
         ErrorResponseDto error = new ErrorResponseDto(errorMessage);
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(InvalidPathException.class)
+    public ResponseEntity<ErrorResponseDto> InvalidPath(InvalidPathException exception){
+        log.warn("INVALID PATH");
+        ErrorResponseDto error = buildError(exception);
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+
+
 
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
