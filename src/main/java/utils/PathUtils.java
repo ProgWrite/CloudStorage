@@ -32,4 +32,14 @@ public class PathUtils {
         return path.replace("user-"+id+"-files/","");
     }
 
+    public static boolean isPathValid(String path){
+        if(path.equals("/")){
+            return false;
+        }
+        if(path == "" || path.endsWith("/")){
+            return true;
+        }
+        return false;
+    }
+
 }

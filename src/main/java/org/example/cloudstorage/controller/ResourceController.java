@@ -1,6 +1,8 @@
 package org.example.cloudstorage.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.cloudstorage.dto.FileSystemItemRequestDto;
 import org.example.cloudstorage.dto.FileSystemItemResponseDto;
 import org.example.cloudstorage.model.User;
 import org.example.cloudstorage.repository.UserRepository;
@@ -23,22 +25,22 @@ public class ResourceController {
     private final UserRepository userRepository;
 
     @GetMapping("/resource")
-    public ResponseEntity<FileSystemItemResponseDto> getResourceInfo(@RequestParam String path,
+    public ResponseEntity<FileSystemItemResponseDto> getResourceInfo(@Valid FileSystemItemRequestDto fileSystemDto,
                                                                      @AuthenticationPrincipal UserDetails userDetails) {
         Optional<User> user = userRepository.findByUsername(userDetails.getUsername());
         Long id = user.get().getId();
-        FileSystemItemResponseDto resource = resourceService.getResourceInfo(id, path);
+        FileSystemItemResponseDto resource = resourceService.getResourceInfo(id, fileSystemDto.path());
         return ResponseEntity.status(HttpStatus.OK).body(resource);
     }
 
     //TODO первые 2 строки кода повторяются везде. Из-за того что приходится вытаскивать id. Подумай как оптимизировать это.
     @PostMapping("/resource")
-    public ResponseEntity<List<FileSystemItemResponseDto>> uploadResource(@RequestParam String path,
+    public ResponseEntity<List<FileSystemItemResponseDto>> uploadResource(@Valid FileSystemItemRequestDto fileSystemDto,
                                                                           @RequestPart("object") MultipartFile[] file,
                                                                           @AuthenticationPrincipal UserDetails userDetails) {
         Optional<User> user = userRepository.findByUsername(userDetails.getUsername());
         Long id = user.get().getId();
-        List<FileSystemItemResponseDto> filesDto = resourceService.upload(id, path, file);
+        List<FileSystemItemResponseDto> filesDto = resourceService.upload(id, fileSystemDto.path(), file);
         return ResponseEntity.status(HttpStatus.CREATED).body(filesDto);
     }
 

@@ -4,6 +4,7 @@ import io.minio.*;
 import io.minio.errors.MinioException;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
+import org.example.cloudstorage.exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -11,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.Optional;
 
 import static utils.PathUtils.buildRootPath;
 
@@ -74,25 +76,24 @@ public class MinioClientService {
         }
     }
 
-
     //TODO почитать о PathReversal.
     public Iterable<Result<Item>> getListObjects(Long id, String path) {
+
         return minioClient.listObjects(ListObjectsArgs.builder()
                         .bucket(bucketName)
                         .prefix(buildRootPath(id) + path)
                         .build());
     }
 
-    //TODO надо будет кастомное исключение
-    public StatObjectResponse statObject(Long id, String path){
+    public Optional<StatObjectResponse> statObject(Long id, String path){
         try{
-            return minioClient.statObject(
+            return Optional.of(minioClient.statObject(
                     StatObjectArgs.builder()
                             .bucket(bucketName)
-                            .object(buildRootPath(id) +path)
-                            .build());
-        } catch (IOException | GeneralSecurityException | MinioException exception) {
-            throw new RuntimeException("Error get information about resource", exception);
+                            .object(buildRootPath(id) + path)
+                            .build()));
+        } catch (Exception exception) {
+            return Optional.empty();
         }
     }
 
@@ -100,7 +101,6 @@ public class MinioClientService {
         Iterable<Result<Item>> results = minioClient.listObjects(ListObjectsArgs.builder()
                         .bucket(bucketName)
                         .prefix(buildRootPath(id) + path)
-                        .maxKeys(1)
                         .build()
         );
         return results.iterator().hasNext();
