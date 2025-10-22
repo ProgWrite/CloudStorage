@@ -1,7 +1,9 @@
 package org.example.cloudstorage.controller;
 
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.cloudstorage.dto.FileSystemItemRequestDto;
 import org.example.cloudstorage.dto.FileSystemItemResponseDto;
 import org.example.cloudstorage.model.User;
 import org.example.cloudstorage.repository.UserRepository;
@@ -23,11 +25,11 @@ public class DirectoryController {
     private final UserRepository userRepository;
 
     @GetMapping("/directory")
-    public ResponseEntity<?> getDirectory(@RequestParam String path,
+    public ResponseEntity<?> getDirectory(@Valid FileSystemItemRequestDto fileSystemDto,
                                           @AuthenticationPrincipal UserDetails userDetails){
         Optional<User> user  = userRepository.findByUsername(userDetails.getUsername());
         Long id = user.get().getId();
-        List<FileSystemItemResponseDto> folder = directoryService.getDirectory(id, path);
+        List<FileSystemItemResponseDto> folder = directoryService.getDirectory(id, fileSystemDto.path());
         return ResponseEntity.ok(folder);
     }
 

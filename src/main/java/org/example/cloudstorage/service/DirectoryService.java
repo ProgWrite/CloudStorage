@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.cloudstorage.dto.FileSystemItemResponseDto;
 import org.example.cloudstorage.dto.ResourceType;
 import org.example.cloudstorage.exception.InvalidPathException;
+import org.example.cloudstorage.exception.ResourceNotFoundException;
 import org.example.cloudstorage.mapper.FileSystemItemMapper;
 import org.springframework.stereotype.Service;
 
@@ -34,12 +35,19 @@ public class DirectoryService {
     }
 
     public List<FileSystemItemResponseDto>getDirectory(Long id, String path){
-        Iterable<Result<Item>> minioObjects = minioClientService.getListObjects(id, path);
-        List<Item> items = extractAndFilterItemsFromMinio(minioObjects, id, path);
+        if (!isPathValid(path)) {
+            throw new InvalidPathException("Invalid path");
+        }
 
-        return items.stream()
-                .map(item -> FileSystemItemMapper.INSTANCE.itemToDto(item,path))
-                .collect(Collectors.toList());
+        if(minioClientService.isPathExists(id, path)){
+            Iterable<Result<Item>> minioObjects = minioClientService.getListObjects(id, path);
+            List<Item> items = extractAndFilterItemsFromMinio(minioObjects, id, path);
+            return items.stream()
+                    .map(item -> FileSystemItemMapper.INSTANCE.itemToDto(item,path))
+                    .collect(Collectors.toList());
+        }
+
+        throw new ResourceNotFoundException("Folder with this name not found");
     }
 
 

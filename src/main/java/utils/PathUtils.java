@@ -3,6 +3,8 @@ package utils;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+
+
 public class PathUtils {
 
     public static String buildPathForBackend(String path){
@@ -36,7 +38,27 @@ public class PathUtils {
         if(path.equals("/")){
             return false;
         }
-        if(path == "" || path.endsWith("/")){
+
+        if(hasMultipleSlashes(path)){
+            return false;
+        }
+
+        if(path.equals("") || path.endsWith("/")){
+            return true;
+        }
+
+        return false;
+    }
+
+    private static boolean hasMultipleSlashes(String path){
+        if(path.equals("")){
+            return false;
+        }
+
+        char[] chars = path.toCharArray();
+        int preLastIndex =  chars.length-2;
+
+        if(chars[preLastIndex] == '/'){
             return true;
         }
         return false;
