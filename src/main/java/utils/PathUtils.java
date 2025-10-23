@@ -7,7 +7,7 @@ import java.nio.file.Paths;
 
 public class PathUtils {
 
-    public static String buildPathForBackend(String path){
+    public static String buildParentPath(String path){
         String truePath;
         Path pathObject =  Paths.get(path);
         Path parent =  pathObject.getParent();

@@ -22,36 +22,45 @@ import static utils.PathUtils.*;
 public class ResourceService {
 
     private final MinioClientService minioClientService;
+    private final DirectoryService directoryService;
 
-    public List<FileSystemItemResponseDto> upload(Long id, String path, MultipartFile[] files){
-        if (!isPathValid(path)) {
-            throw new InvalidPathException("Invalid path");
-        }
-        if(isFileExists(files, path, id)){
-            throw new ResourceExistsException("File with this name already exists");
-        }
-
-       return getUploadedFiles(files, id, path);
-    }
 
     //TODO возможно можно сделать общий buildDto для 2 методов
     public FileSystemItemResponseDto getResourceInfo(Long id, String path) {
-        String backendPath = buildPathForBackend(path);
+        String backendPath = buildParentPath(path);
 
         if (minioClientService.isPathExists(id, backendPath)) {
             return minioClientService.statObject(id, path)
                     .map(object -> buildDto(object, id))
-                    .orElseThrow(()-> new ResourceNotFoundException("Resource not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Resource not found"));
         }
 
         throw new InvalidPathException("path does not exist");
     }
 
+
+    public List<FileSystemItemResponseDto> upload(Long id, String path, MultipartFile[] files) {
+        if (!isPathValid(path)) {
+            throw new InvalidPathException("Invalid path");
+        }
+        if (isFileExists(files, path, id)) {
+            throw new ResourceExistsException("File with this name already exists");
+        }
+
+        String folderName = extractFolderName(path, false);
+
+        if (directoryService.isFolderExists(id, folderName, path)) {
+            throw new ResourceExistsException("Folder with this name already exists.");
+        }
+        return getUploadedFiles(files, id, path);
+    }
+
+
     private FileSystemItemResponseDto buildDto(StatObjectResponse object, Long id) {
 
         String fullName = object.object();
         String relativePath = deleteRootPath(fullName, id);
-        String truePath = PathUtils.buildPathForBackend(relativePath);
+        String truePath = PathUtils.buildParentPath(relativePath);
 
         String folderName = extractFolderName(fullName, false);
 
@@ -92,8 +101,6 @@ public class ResourceService {
         }
         return uploadedFiles;
     }
-
-
 
 
 }

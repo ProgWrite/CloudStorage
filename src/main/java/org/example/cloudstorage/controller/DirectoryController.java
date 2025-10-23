@@ -34,11 +34,11 @@ public class DirectoryController {
     }
 
     @PostMapping("/directory")
-    public ResponseEntity<FileSystemItemResponseDto> createDirectory(@RequestParam String path,
+    public ResponseEntity<FileSystemItemResponseDto> createDirectory(@Valid FileSystemItemRequestDto fileSystemDto,
                                                                      @AuthenticationPrincipal UserDetails userDetails) {
         Optional<User> user  = userRepository.findByUsername(userDetails.getUsername());
         Long id = user.get().getId();
-        FileSystemItemResponseDto folder = directoryService.createDirectory(id, path);
+        FileSystemItemResponseDto folder = directoryService.createDirectory(id, fileSystemDto.path());
         return ResponseEntity.status(HttpStatus.CREATED).body(folder);
     }
 

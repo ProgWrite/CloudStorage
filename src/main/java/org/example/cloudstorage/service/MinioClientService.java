@@ -29,8 +29,8 @@ public class MinioClientService {
 
 
     //TODO надо будет кастомное исключение
-    public void putRootDirectory(Long id){
-        try{
+    public void putRootDirectory(Long id) {
+        try {
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(bucketName)
@@ -39,15 +39,15 @@ public class MinioClientService {
                             .contentType(DEFAULT_CONTENT_TYPE)
                             .build()
             );
-        }catch (IOException | GeneralSecurityException | MinioException exception) {
+        } catch (IOException | GeneralSecurityException | MinioException exception) {
             throw new RuntimeException("Error creating RootFolder", exception);
         }
     }
 
     //TODO тут можно сделать общий метод (файлы + папки) в одном методе!!! И подумать о исключениях
     //TODO надо будет кастомное исключение
-    public void putDirectory(Long id, String path){
-        try{
+    public void putDirectory(Long id, String path) {
+        try {
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(bucketName)
@@ -55,7 +55,7 @@ public class MinioClientService {
                             .stream(EMPTY_STREAM, EMPTY_FOLDER_SIZE, AUTO_PART_SIZE)
                             .build()
             );
-        }catch (IOException | GeneralSecurityException | MinioException exception) {
+        } catch (IOException | GeneralSecurityException | MinioException exception) {
             throw new RuntimeException("Error creating Folder", exception);
         }
     }
@@ -66,7 +66,7 @@ public class MinioClientService {
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(bucketName)
-                            .object(buildRootPath(id)+path+file.getOriginalFilename())
+                            .object(buildRootPath(id) + path + file.getOriginalFilename())
                             .stream(file.getInputStream(), file.getSize(), AUTO_PART_SIZE)
                             .contentType(file.getContentType())
                             .build()
@@ -80,13 +80,13 @@ public class MinioClientService {
     public Iterable<Result<Item>> getListObjects(Long id, String path) {
 
         return minioClient.listObjects(ListObjectsArgs.builder()
-                        .bucket(bucketName)
-                        .prefix(buildRootPath(id) + path)
-                        .build());
+                .bucket(bucketName)
+                .prefix(buildRootPath(id) + path)
+                .build());
     }
 
-    public Optional<StatObjectResponse> statObject(Long id, String path){
-        try{
+    public Optional<StatObjectResponse> statObject(Long id, String path) {
+        try {
             return Optional.of(minioClient.statObject(
                     StatObjectArgs.builder()
                             .bucket(bucketName)
@@ -97,11 +97,11 @@ public class MinioClientService {
         }
     }
 
-    public boolean isPathExists(Long id, String path){
+    public boolean isPathExists(Long id, String path) {
         Iterable<Result<Item>> results = minioClient.listObjects(ListObjectsArgs.builder()
-                        .bucket(bucketName)
-                        .prefix(buildRootPath(id) + path)
-                        .build()
+                .bucket(bucketName)
+                .prefix(buildRootPath(id) + path)
+                .build()
         );
         return results.iterator().hasNext();
     }
