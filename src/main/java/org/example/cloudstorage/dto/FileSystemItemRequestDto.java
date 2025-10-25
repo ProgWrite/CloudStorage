@@ -5,8 +5,6 @@ import jakarta.validation.constraints.Pattern;
 //TODO В ДАЛЬНЙШЕМ МОЖНО ВВЕСТИ АННОТАЦИЮ SIZE когда решу какое максимальное по символам название может иметь папка.
 public record FileSystemItemRequestDto(
 
-
-        @Pattern(regexp = "^(|.{3,})$", message = "Path must be empty or at least 3 characters")
-        @Pattern(regexp = "^[^\\\\:*?\"<>|&%$#!@+={}\\[\\].;'~`,№()\\-]*$", message = "Path contains invalid characters")
+        @Pattern(regexp = "^[^\\\\:*?\"<>|&%$#!@+={}\\[\\];'~`,№()\\-]*$", message = "Path contains invalid characters")
         String path) {
 }

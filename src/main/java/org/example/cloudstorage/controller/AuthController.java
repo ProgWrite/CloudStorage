@@ -171,8 +171,9 @@ public class AuthController {
             )
     }
     )
+
     @PostMapping("/sign-out")
-    public ResponseEntity<UserResponseDto> signOut(HttpServletRequest request) {
+    public ResponseEntity<Void> signOut(HttpServletRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || authentication instanceof AnonymousAuthenticationToken) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();

@@ -2,6 +2,7 @@ package org.example.cloudstorage.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.cloudstorage.dto.FileSystemDeleteRequestDto;
 import org.example.cloudstorage.dto.FileSystemItemRequestDto;
 import org.example.cloudstorage.dto.FileSystemItemResponseDto;
 import org.example.cloudstorage.model.User;
@@ -43,5 +44,18 @@ public class ResourceController {
         List<FileSystemItemResponseDto> filesDto = resourceService.upload(id, fileSystemDto.path(), file);
         return ResponseEntity.status(HttpStatus.CREATED).body(filesDto);
     }
+
+    @DeleteMapping("/resource")
+    public ResponseEntity<Void> delete(@AuthenticationPrincipal UserDetails userDetails,
+                                       @Valid FileSystemDeleteRequestDto file){
+
+        Optional<User> user = userRepository.findByUsername(userDetails.getUsername());
+        Long id = user.get().getId();
+        resourceService.delete(id, file.path());
+        return ResponseEntity.noContent().build();
+    }
+
+
+
 
 }

@@ -97,6 +97,20 @@ public class MinioClientService {
         }
     }
 
+    public void removeObject(Long id, String path) {
+      try{
+          minioClient.removeObject(
+                  RemoveObjectArgs.builder()
+                          .bucket(bucketName)
+                          .object(buildRootPath(id) + path)
+                          .build());
+      }catch (IOException | GeneralSecurityException | MinioException exception) {
+          throw new RuntimeException("Error deleting File", exception);
+      }
+
+    }
+
+
     public boolean isPathExists(Long id, String path) {
         Iterable<Result<Item>> results = minioClient.listObjects(ListObjectsArgs.builder()
                 .bucket(bucketName)

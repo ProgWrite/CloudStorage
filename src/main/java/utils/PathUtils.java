@@ -50,6 +50,18 @@ public class PathUtils {
         return false;
     }
 
+    public static boolean isPathValidToDelete(String path){
+        if(path.equals("/")){
+            return false;
+        }
+        if(hasMultipleSlashes(path)){
+            return false;
+        }
+        return true;
+    }
+
+
+
     private static boolean hasMultipleSlashes(String path){
         if(path.equals("")){
             return false;

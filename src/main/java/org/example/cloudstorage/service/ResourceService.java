@@ -24,8 +24,6 @@ public class ResourceService {
     private final MinioClientService minioClientService;
     private final DirectoryService directoryService;
 
-
-    //TODO возможно можно сделать общий buildDto для 2 методов
     public FileSystemItemResponseDto getResourceInfo(Long id, String path) {
         String backendPath = buildParentPath(path);
 
@@ -37,7 +35,6 @@ public class ResourceService {
 
         throw new InvalidPathException("path does not exist");
     }
-
 
     public List<FileSystemItemResponseDto> upload(Long id, String path, MultipartFile[] files) {
         if (!isPathValid(path)) {
@@ -53,6 +50,21 @@ public class ResourceService {
             throw new ResourceExistsException("Folder with this name already exists.");
         }
         return getUploadedFiles(files, id, path);
+    }
+
+    public void delete(Long id, String path) {
+        if(!isPathValidToDelete(path)){
+            throw new InvalidPathException("Invalid path");
+        }
+
+        if(path.endsWith("/") || path.equals("")){
+            directoryService.getDirectory(id,path);
+            deleteFolder(id, path);
+        }else{
+            getResourceInfo(id, path);
+            minioClientService.removeObject(id, path);
+        }
+
     }
 
 
@@ -102,5 +114,17 @@ public class ResourceService {
         return uploadedFiles;
     }
 
+    private void deleteFolder(Long id, String path){
+        List<FileSystemItemResponseDto> files  = directoryService.getDirectory(id, path);
+        for (FileSystemItemResponseDto file : files) {
+            String pathForDelete = path + file.name();
+            if(pathForDelete.endsWith("/")) {
+                deleteFolder(id, pathForDelete);
+            }else{
+                minioClientService.removeObject(id, pathForDelete);
+            }
+        }
+        minioClientService.removeObject(id, path);
+    }
 
 }
