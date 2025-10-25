@@ -55,7 +55,4 @@ public class ResourceController {
         return ResponseEntity.noContent().build();
     }
 
-
-
-
 }

@@ -11,9 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import utils.PathUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static utils.PathUtils.*;
 
@@ -49,6 +47,7 @@ public class ResourceService {
         if (directoryService.isFolderExists(id, folderName, path)) {
             throw new ResourceExistsException("Folder with this name already exists.");
         }
+
         return getUploadedFiles(files, id, path);
     }
 
@@ -102,8 +101,16 @@ public class ResourceService {
 
         for (MultipartFile file : files) {
             String fileName = file.getOriginalFilename();
+
+          if(buildParentPath(fileName).endsWith("/")){
+              Set<String> uniqueFolders = getUniqueFolders(files);
+              for (String folderName : uniqueFolders) {
+                  minioClientService.putDirectory(id, folderName);
+              }
+            }
+
             minioClientService.putFile(id, path, file);
-            uploadedFiles.add(new FileSystemItemResponseDto(
+                uploadedFiles.add(new FileSystemItemResponseDto(
                             path,
                             fileName,
                             file.getSize(),
@@ -127,4 +134,14 @@ public class ResourceService {
         minioClientService.removeObject(id, path);
     }
 
+    private Set<String> getUniqueFolders(MultipartFile[] files){
+        Set<String> uniqueFolders = new HashSet<>();
+
+        for (MultipartFile file : files) {
+            String folderName = file.getOriginalFilename();
+            String parentPath =  buildParentPath(folderName);
+            uniqueFolders.add(parentPath);
+        }
+        return uniqueFolders;
+    }
 }

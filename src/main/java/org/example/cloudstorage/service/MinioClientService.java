@@ -85,7 +85,7 @@ public class MinioClientService {
                 .build());
     }
 
-    public Optional<StatObjectResponse> statObject(Long id, String path) {
+        public Optional<StatObjectResponse> statObject(Long id, String path) {
         try {
             return Optional.of(minioClient.statObject(
                     StatObjectArgs.builder()
