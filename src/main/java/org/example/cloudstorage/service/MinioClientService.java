@@ -4,13 +4,14 @@ import io.minio.*;
 import io.minio.errors.MinioException;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
-import org.example.cloudstorage.exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import utils.TraversalMode;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.util.Optional;
 
@@ -77,15 +78,17 @@ public class MinioClientService {
     }
 
     //TODO почитать о PathReversal.
-    public Iterable<Result<Item>> getListObjects(Long id, String path) {
+    public Iterable<Result<Item>> getListObjects(Long id, String path, TraversalMode traversalMode) {
+        boolean searchType = (TraversalMode.RECURSIVE == traversalMode);
 
         return minioClient.listObjects(ListObjectsArgs.builder()
                 .bucket(bucketName)
                 .prefix(buildRootPath(id) + path)
+                .recursive(searchType)
                 .build());
     }
 
-        public Optional<StatObjectResponse> statObject(Long id, String path) {
+    public Optional<StatObjectResponse> statObject(Long id, String path) {
         try {
             return Optional.of(minioClient.statObject(
                     StatObjectArgs.builder()
@@ -98,16 +101,30 @@ public class MinioClientService {
     }
 
     public void removeObject(Long id, String path) {
-      try{
-          minioClient.removeObject(
-                  RemoveObjectArgs.builder()
-                          .bucket(bucketName)
-                          .object(buildRootPath(id) + path)
-                          .build());
-      }catch (IOException | GeneralSecurityException | MinioException exception) {
-          throw new RuntimeException("Error deleting File", exception);
-      }
+        try {
+            minioClient.removeObject(
+                    RemoveObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(buildRootPath(id) + path)
+                            .build());
+        } catch (IOException | GeneralSecurityException | MinioException exception) {
+            throw new RuntimeException("Error deleting File", exception);
+        }
 
+    }
+
+    //TODO надо будет кастомное исключение
+    public InputStream getObject(Long id, String path) {
+        try {
+            return minioClient.getObject(
+                    GetObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(buildRootPath(id) + path)
+                            .build()
+            );
+        } catch (Exception exception) {
+            throw new RuntimeException("Error getting resource", exception);
+        }
     }
 
 

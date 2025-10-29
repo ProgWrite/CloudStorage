@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import utils.TraversalMode;
 
 import java.util.List;
 import java.util.Optional;
@@ -29,7 +30,7 @@ public class DirectoryController {
                                           @AuthenticationPrincipal UserDetails userDetails){
         Optional<User> user  = userRepository.findByUsername(userDetails.getUsername());
         Long id = user.get().getId();
-        List<FileSystemItemResponseDto> folder = directoryService.getDirectory(id, fileSystemDto.path());
+        List<FileSystemItemResponseDto> folder = directoryService.getDirectory(id, fileSystemDto.path(), TraversalMode.NON_RECURSIVE);
         return ResponseEntity.ok(folder);
     }
 

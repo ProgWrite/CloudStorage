@@ -18,15 +18,15 @@ public interface FileSystemItemMapper {
 
     //TODO может тут все изменится когда появятся файлы!!!
     @Mapping(target = "path", source = "path")
-    @Mapping(target = "name", source = "item", qualifiedByName = "extractFolderName")
+    @Mapping(target = "name", source = "item", qualifiedByName = "extractResourceName")
     @Mapping(target = "size", source = "item", qualifiedByName = "extractSizeByType")
     @Mapping(target = "type", source = "item", qualifiedByName = "determineResourceType")
     FileSystemItemResponseDto itemToDto(Item item, String path);
 
-    @Named("extractFolderName")
+    @Named("extractResourceName")
     default String extractFolderName(Item item) {
         boolean isDirectory = item.objectName().endsWith("/");
-        return PathUtils.extractFolderName(item.objectName(), isDirectory);
+        return PathUtils.extractResourceName(item.objectName(), isDirectory);
     }
 
     @Named("extractSizeByType")

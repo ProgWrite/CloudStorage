@@ -1,7 +1,10 @@
 package org.example.cloudstorage.service;
 
+import io.minio.Result;
 import io.minio.StatObjectResponse;
+import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.compress.utils.IOUtils;
 import org.example.cloudstorage.dto.FileSystemItemResponseDto;
 import org.example.cloudstorage.dto.ResourceType;
 import org.example.cloudstorage.exception.InvalidPathException;
@@ -9,9 +12,16 @@ import org.example.cloudstorage.exception.ResourceExistsException;
 import org.example.cloudstorage.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import utils.PathUtils;
+import utils.TraversalMode;
 
+import java.io.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static utils.PathUtils.*;
 
@@ -21,6 +31,9 @@ public class ResourceService {
 
     private final MinioClientService minioClientService;
     private final DirectoryService directoryService;
+    private static final int BUFFER_SIZE_1KB = 1024;
+    private static final int START_OF_BUFFER = 0;
+    private static final int END_OF_INPUT_STREAM = -1;
 
     public FileSystemItemResponseDto getResourceInfo(Long id, String path) {
         String backendPath = buildParentPath(path);
@@ -42,7 +55,7 @@ public class ResourceService {
             throw new ResourceExistsException("File with this name already exists");
         }
 
-        String folderName = extractFolderName(path, false);
+        String folderName = extractResourceName(path, false);
 
         if (directoryService.isFolderExists(id, folderName, path)) {
             throw new ResourceExistsException("Folder with this name already exists.");
@@ -52,18 +65,24 @@ public class ResourceService {
     }
 
     public void delete(Long id, String path) {
-        if(!isPathValidToDelete(path)){
+        if (!isPathValidToDelete(path)) {
             throw new InvalidPathException("Invalid path");
         }
 
-        if(path.endsWith("/") || path.equals("")){
-            directoryService.getDirectory(id,path);
+        if (path.endsWith("/")) {
+            directoryService.getDirectory(id, path, TraversalMode.NON_RECURSIVE);
             deleteFolder(id, path);
-        }else{
+        } else {
             getResourceInfo(id, path);
             minioClientService.removeObject(id, path);
         }
+    }
 
+    public StreamingResponseBody download(Long id, String path) throws IOException {
+        if (path.endsWith("/")) {
+            return downloadFolder(id, path);
+        }
+        return downloadFile(id, path);
     }
 
 
@@ -73,7 +92,7 @@ public class ResourceService {
         String relativePath = deleteRootPath(fullName, id);
         String truePath = PathUtils.buildParentPath(relativePath);
 
-        String folderName = extractFolderName(fullName, false);
+        String folderName = extractResourceName(fullName, false);
 
         return new FileSystemItemResponseDto(
                 truePath,
@@ -102,15 +121,15 @@ public class ResourceService {
         for (MultipartFile file : files) {
             String fileName = file.getOriginalFilename();
 
-          if(buildParentPath(fileName).endsWith("/")){
-              Set<String> uniqueFolders = getUniqueFolders(files);
-              for (String folderName : uniqueFolders) {
-                  minioClientService.putDirectory(id, folderName);
-              }
+            if (buildParentPath(fileName).endsWith("/")) {
+                Set<String> uniqueFolders = getUniqueFolders(files);
+                for (String folderName : uniqueFolders) {
+                    minioClientService.putDirectory(id, folderName);
+                }
             }
 
             minioClientService.putFile(id, path, file);
-                uploadedFiles.add(new FileSystemItemResponseDto(
+            uploadedFiles.add(new FileSystemItemResponseDto(
                             path,
                             fileName,
                             file.getSize(),
@@ -121,27 +140,76 @@ public class ResourceService {
         return uploadedFiles;
     }
 
-    private void deleteFolder(Long id, String path){
-        List<FileSystemItemResponseDto> files  = directoryService.getDirectory(id, path);
+    private void deleteFolder(Long id, String path) {
+        List<FileSystemItemResponseDto> files = directoryService.getDirectory(id, path, TraversalMode.NON_RECURSIVE);
         for (FileSystemItemResponseDto file : files) {
             String pathForDelete = path + file.name();
-            if(pathForDelete.endsWith("/")) {
+            if (pathForDelete.endsWith("/")) {
                 deleteFolder(id, pathForDelete);
-            }else{
+            } else {
                 minioClientService.removeObject(id, pathForDelete);
             }
         }
         minioClientService.removeObject(id, path);
     }
 
-    private Set<String> getUniqueFolders(MultipartFile[] files){
+    private Set<String> getUniqueFolders(MultipartFile[] files) {
         Set<String> uniqueFolders = new HashSet<>();
 
         for (MultipartFile file : files) {
             String folderName = file.getOriginalFilename();
-            String parentPath =  buildParentPath(folderName);
+            String parentPath = buildParentPath(folderName);
             uniqueFolders.add(parentPath);
         }
         return uniqueFolders;
     }
+
+    //TODO кастомное исключение
+    private StreamingResponseBody downloadFile(Long id, String path) {
+        return outputStream -> {
+            try (InputStream object = minioClientService.getObject(id, path)) {
+                byte[] data = new byte[BUFFER_SIZE_1KB];
+                int bytesRead;
+                while ((bytesRead = object.read(data)) != END_OF_INPUT_STREAM) {
+                    outputStream.write(data, START_OF_BUFFER, bytesRead);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException("Error downloading file");
+            }
+        };
+    }
+
+    private StreamingResponseBody downloadFolder(Long id, String path) {
+        return output -> {
+            Iterable<Result<Item>> minioObjects = minioClientService.getListObjects(id, path, TraversalMode.RECURSIVE);
+            List<Item> items = directoryService.extractAndFilterItemsFromMinio(minioObjects, id, path);
+            buildZipFromItems(output, path, id, items);
+        };
+    }
+
+    //TODO кастомные исключения!
+    private void buildZipFromItems(OutputStream output, String path, Long id, List<Item> items) throws IOException {
+        try (ZipOutputStream zip = new ZipOutputStream(output)) {
+            String parentPath = buildParentPath(path);
+            Path parentDirectory = Paths.get(parentPath);
+
+            for (Item item : items) {
+                if (item.objectName().endsWith("/")) {
+                    continue;
+                }
+
+                String pathWithoutRoot = deleteRootPath(item.objectName(), id);
+                String relativePath = getRelativePath(pathWithoutRoot, parentDirectory);
+
+                zip.putNextEntry(new ZipEntry(relativePath));
+
+                try (InputStream object = minioClientService.getObject(id, pathWithoutRoot)) {
+                    IOUtils.copy(object, zip);
+                }
+                zip.closeEntry();
+            }
+        }
+    }
+
+
 }

@@ -23,8 +23,7 @@ public class PathUtils {
         return "user-" + id + "-files/";
     }
 
-    //TODO возможно потом пригодится этот метод когда я буду делать тоже самое для файлов! Может придется его переделать
-    public static String extractFolderName(String objectName, boolean isTrailingSlash){
+    public static String extractResourceName(String objectName, boolean isTrailingSlash){
         Path testFilePath = Paths.get(objectName);
         String folderName = testFilePath.getFileName().toString();
         return isTrailingSlash ? folderName + "/" : folderName;
@@ -51,7 +50,7 @@ public class PathUtils {
     }
 
     public static boolean isPathValidToDelete(String path){
-        if(path.equals("/")){
+        if(path.equals("/") || path.equals("")){
             return false;
         }
         if(hasMultipleSlashes(path)){
@@ -59,8 +58,6 @@ public class PathUtils {
         }
         return true;
     }
-
-
 
     private static boolean hasMultipleSlashes(String path){
         if(path.equals("")){
@@ -75,5 +72,15 @@ public class PathUtils {
         }
         return false;
     }
+
+
+    public static String getRelativePath(String pathWithoutRoot, Path parentDirectory){
+        Path currentDirectory = Paths.get(pathWithoutRoot);
+        String currentPath = parentDirectory.relativize(currentDirectory).toString().replace("\\", "/");
+        return currentPath;
+    }
+
+
+
 
 }

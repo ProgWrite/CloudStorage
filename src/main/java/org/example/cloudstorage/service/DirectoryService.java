@@ -10,6 +10,7 @@ import org.example.cloudstorage.exception.ResourceExistsException;
 import org.example.cloudstorage.exception.ResourceNotFoundException;
 import org.example.cloudstorage.mapper.FileSystemItemMapper;
 import org.springframework.stereotype.Service;
+import utils.TraversalMode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +41,7 @@ public class DirectoryService {
             throw new ResourceNotFoundException("Parent path not found.");
         }
 
-        String folderName = extractFolderName(path, false);
+        String folderName = extractResourceName(path, false);
 
         if (isFolderExists(id, folderName, parentPath)) {
             throw new ResourceExistsException("Folder with this name already exists.");
@@ -51,13 +52,13 @@ public class DirectoryService {
     }
 
 
-    public List<FileSystemItemResponseDto> getDirectory(Long id, String path) {
+    public List<FileSystemItemResponseDto> getDirectory(Long id, String path, TraversalMode traversalMode) {
         if (!isPathValid(path)) {
             throw new InvalidPathException("Invalid path");
         }
 
         if (minioClientService.isPathExists(id, path)) {
-            Iterable<Result<Item>> minioObjects = minioClientService.getListObjects(id, path);
+            Iterable<Result<Item>> minioObjects = minioClientService.getListObjects(id, path, traversalMode);
             List<Item> items = extractAndFilterItemsFromMinio(minioObjects, id, path);
             return items.stream()
                     .map(item -> FileSystemItemMapper.INSTANCE.itemToDto(item, path))
@@ -67,8 +68,20 @@ public class DirectoryService {
         throw new ResourceNotFoundException("Folder with this name not found");
     }
 
+    public boolean isFolderExists(Long id, String folderName, String parentPath) {
+        List<FileSystemItemResponseDto> files = getDirectory(id, parentPath, TraversalMode.NON_RECURSIVE);
+        String folderNameWithSlash = folderName + "/";
+
+        for (FileSystemItemResponseDto file : files) {
+            if (file.name().equals(folderNameWithSlash)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     //TODO подумай о кастомном исключении здесь!!!
-    private List<Item> extractAndFilterItemsFromMinio(Iterable<Result<Item>> minioObjects, Long id, String path) {
+    public List<Item> extractAndFilterItemsFromMinio(Iterable<Result<Item>> minioObjects, Long id, String path) {
         List<Item> successfulItems = new ArrayList<>();
         try {
             for (Result<Item> minioObject : minioObjects) {
@@ -84,16 +97,5 @@ public class DirectoryService {
         return successfulItems;
     }
 
-    public boolean isFolderExists(Long id, String folderName, String parentPath) {
-        List<FileSystemItemResponseDto> files = getDirectory(id, parentPath);
-        String folderNameWithSlash = folderName + "/";
-
-        for (FileSystemItemResponseDto file : files) {
-            if (file.name().equals(folderNameWithSlash)) {
-                return true;
-            }
-        }
-        return false;
-    }
 
 }
