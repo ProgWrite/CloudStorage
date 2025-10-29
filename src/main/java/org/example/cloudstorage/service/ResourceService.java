@@ -65,22 +65,37 @@ public class ResourceService {
     }
 
     public void delete(Long id, String path) {
-        if (!isPathValidToDelete(path)) {
+        if (!isPathValidToDeleteOrDownload(path)) {
             throw new InvalidPathException("Invalid path");
         }
 
         if (path.endsWith("/")) {
-            directoryService.getDirectory(id, path, TraversalMode.NON_RECURSIVE);
+            if (!minioClientService.isPathExists(id, path)) {
+                throw new ResourceNotFoundException("Folder with this name not found");
+            }
             deleteFolder(id, path);
         } else {
-            getResourceInfo(id, path);
+            if(!isFileExists(id, path)){
+                throw new ResourceNotFoundException("File with this name not found");
+            }
             minioClientService.removeObject(id, path);
         }
     }
 
     public StreamingResponseBody download(Long id, String path) throws IOException {
+        if (!isPathValidToDeleteOrDownload(path)) {
+            throw new InvalidPathException("Invalid path");
+        }
+
         if (path.endsWith("/")) {
+            if (!minioClientService.isPathExists(id, path)) {
+                throw new ResourceNotFoundException("Folder with this name not found");
+            }
             return downloadFolder(id, path);
+        }
+
+        if(!isFileExists(id, path)){
+            throw new ResourceNotFoundException("File with this name not found");
         }
         return downloadFile(id, path);
     }
@@ -113,6 +128,15 @@ public class ResourceService {
         }
         return false;
     }
+
+    private boolean isFileExists(Long id, String path) {
+        Optional<StatObjectResponse> existingFile = minioClientService.statObject(id, path);
+        if (existingFile.isPresent()) {
+            return true;
+        }
+        return false;
+    }
+
 
     private List<FileSystemItemResponseDto> getUploadedFiles(MultipartFile[] files, Long id, String path) {
 

@@ -34,7 +34,7 @@ public class PathUtils {
     }
 
     public static boolean isPathValid(String path){
-        if(path.equals("/")){
+        if(path.startsWith("/")) {
             return false;
         }
 
@@ -49,8 +49,8 @@ public class PathUtils {
         return false;
     }
 
-    public static boolean isPathValidToDelete(String path){
-        if(path.equals("/") || path.equals("")){
+    public static boolean isPathValidToDeleteOrDownload(String path){
+        if(path.equals("") || path.startsWith("/")){
             return false;
         }
         if(hasMultipleSlashes(path)){
@@ -64,13 +64,7 @@ public class PathUtils {
             return false;
         }
 
-        char[] chars = path.toCharArray();
-        int preLastIndex =  chars.length-2;
-
-        if(chars[preLastIndex] == '/'){
-            return true;
-        }
-        return false;
+       return path.contains("//");
     }
 
 

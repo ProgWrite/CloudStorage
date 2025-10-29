@@ -2,7 +2,7 @@ package org.example.cloudstorage.dto;
 
 import jakarta.validation.constraints.Pattern;
 
-//TODO может не нужен будет этот класс, если паттерны одинаковы. но может и нужен, так как есть метод в сервисе isPathValidToDelete. Может я сделаю его кастомной аннотацией.
+//TODO может не нужен будет этот класс, если паттерны одинаковы. но может и нужен, так как есть метод в сервисе isPathValidToDeleteOrDownload. Может я сделаю его кастомной аннотацией.
 public record FileSystemDeleteRequestDto(
 
 
