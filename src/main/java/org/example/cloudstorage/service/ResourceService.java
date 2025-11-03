@@ -55,10 +55,8 @@ public class ResourceService {
             throw new ResourceExistsException("File with this name already exists");
         }
 
-        String folderName = extractResourceName(path, false);
-
-        if (directoryService.isFolderExists(id, folderName, path)) {
-            throw new ResourceExistsException("Folder with this name already exists.");
+        if (!minioClientService.isPathExists(id, path) && path.endsWith("/")) {
+            return getUploadedFiles(files, id, path);
         }
 
         return getUploadedFiles(files, id, path);
@@ -75,7 +73,7 @@ public class ResourceService {
             }
             deleteFolder(id, path);
         } else {
-            if(!isFileExists(id, path)){
+            if (!isFileExists(id, path)) {
                 throw new ResourceNotFoundException("File with this name not found");
             }
             minioClientService.removeObject(id, path);
@@ -94,12 +92,25 @@ public class ResourceService {
             return downloadFolder(id, path);
         }
 
-        if(!isFileExists(id, path)){
+        if (!isFileExists(id, path)) {
             throw new ResourceNotFoundException("File with this name not found");
         }
         return downloadFile(id, path);
     }
 
+    //TODO заглушка для Size и для Path и для ResourceType.FILE (просто тест)
+    public FileSystemItemResponseDto move(Long id, String currentPath, String newPath) {
+        String folderName = extractResourceName(newPath, false);
+        minioClientService.copyObject(id, currentPath, newPath);
+        delete(id, currentPath);
+
+        return new FileSystemItemResponseDto(
+                newPath,
+                folderName,
+                0L,
+                ResourceType.FILE
+        );
+    }
 
     private FileSystemItemResponseDto buildDto(StatObjectResponse object, Long id) {
 
@@ -137,21 +148,20 @@ public class ResourceService {
         return false;
     }
 
-
     private List<FileSystemItemResponseDto> getUploadedFiles(MultipartFile[] files, Long id, String path) {
 
         List<FileSystemItemResponseDto> uploadedFiles = new ArrayList<>();
+        Set<String> uniqueFolders = getUniqueFolders(files, path, id);
+
+        if (!uniqueFolders.isEmpty()) {
+            for (String folderName : uniqueFolders) {
+                String resourcePath = folderName;
+                minioClientService.putDirectory(id, resourcePath);
+            }
+        }
 
         for (MultipartFile file : files) {
             String fileName = file.getOriginalFilename();
-
-            if (buildParentPath(fileName).endsWith("/")) {
-                Set<String> uniqueFolders = getUniqueFolders(files);
-                for (String folderName : uniqueFolders) {
-                    minioClientService.putDirectory(id, folderName);
-                }
-            }
-
             minioClientService.putFile(id, path, file);
             uploadedFiles.add(new FileSystemItemResponseDto(
                             path,
@@ -163,6 +173,7 @@ public class ResourceService {
         }
         return uploadedFiles;
     }
+
 
     private void deleteFolder(Long id, String path) {
         List<FileSystemItemResponseDto> files = directoryService.getDirectory(id, path, TraversalMode.NON_RECURSIVE);
@@ -177,14 +188,23 @@ public class ResourceService {
         minioClientService.removeObject(id, path);
     }
 
-    private Set<String> getUniqueFolders(MultipartFile[] files) {
+    private Set<String> getUniqueFolders(MultipartFile[] files, String path, Long id) {
         Set<String> uniqueFolders = new HashSet<>();
 
         for (MultipartFile file : files) {
-            String folderName = file.getOriginalFilename();
-            String parentPath = buildParentPath(folderName);
-            uniqueFolders.add(parentPath);
+            String resourceName = path + file.getOriginalFilename();
+            for (int i = 0; i < resourceName.length(); i++) {
+                if (resourceName.charAt(i) == '/') {
+
+                    if (minioClientService.isPathExists(id, resourceName.substring(0, i + 1))) {
+                        continue;
+                    }
+
+                    uniqueFolders.add(resourceName.substring(0, i + 1));
+                }
+            }
         }
+
         return uniqueFolders;
     }
 
