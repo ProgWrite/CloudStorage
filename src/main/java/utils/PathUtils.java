@@ -1,5 +1,7 @@
 package utils;
 
+import io.minio.messages.Item;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -73,6 +75,21 @@ public class PathUtils {
         String currentPath = parentDirectory.relativize(currentDirectory).toString().replace("\\", "/");
         return currentPath;
     }
+
+    public static String buildRelativeResourcePath(Item item, String currentPath, Long id){
+        String fullPath = deleteRootPath(item.objectName(), id);
+        Path currentDirectory = Paths.get(currentPath);
+
+        if (fullPath.endsWith("/")) {
+            return getRelativePath(fullPath, currentDirectory) + "/";
+        } else {
+           return getRelativePath(fullPath, currentDirectory);
+        }
+    }
+
+
+
+
 
 
 

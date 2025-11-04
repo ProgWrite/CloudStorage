@@ -127,7 +127,6 @@ public class MinioClientService {
         }
     }
 
-
     public boolean isPathExists(Long id, String path) {
         Iterable<Result<Item>> results = minioClient.listObjects(ListObjectsArgs.builder()
                 .bucket(bucketName)
@@ -135,6 +134,25 @@ public class MinioClientService {
                 .build()
         );
         return results.iterator().hasNext();
+    }
+
+    //TODO надо будет кастомное исключение
+    public void copyObject(Long id, String currentPath, String newPath) {
+        try{
+            minioClient.copyObject(
+                    CopyObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(buildRootPath(id) + newPath)
+                            .source(
+                                    CopySource.builder()
+                                            .bucket(bucketName)
+                                            .object(buildRootPath(id) + currentPath)
+                                            .build())
+                            .build());
+        }catch (Exception exception) {
+            throw new RuntimeException("Error moving resource", exception);
+        }
+
     }
 
 }

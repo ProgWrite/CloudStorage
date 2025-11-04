@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.cloudstorage.dto.FileSystemDeleteRequestDto;
 import org.example.cloudstorage.dto.FileSystemItemRequestDto;
 import org.example.cloudstorage.dto.FileSystemItemResponseDto;
+import org.example.cloudstorage.dto.FileSystemMoveRequestDto;
 import org.example.cloudstorage.model.User;
 import org.example.cloudstorage.repository.UserRepository;
 import org.example.cloudstorage.service.ResourceService;
@@ -87,6 +88,18 @@ public class ResourceController {
                 .body(responseBody);
 
     }
+
+    //TODO позже добавь @Valid как в других контролерах.
+    @GetMapping("/resource/move")
+    public ResponseEntity<FileSystemItemResponseDto> moveResource(FileSystemMoveRequestDto fileMoveDto,
+                                                                  @AuthenticationPrincipal UserDetails userDetails){
+        Optional<User> user = userRepository.findByUsername(userDetails.getUsername());
+        Long id = user.get().getId();
+        FileSystemItemResponseDto resource = resourceService.move(id, fileMoveDto.from(),  fileMoveDto.to());
+
+        return ResponseEntity.ok(resource);
+    }
+
 
 
 }

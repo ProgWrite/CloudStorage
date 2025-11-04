@@ -98,18 +98,11 @@ public class ResourceService {
         return downloadFile(id, path);
     }
 
-    //TODO заглушка для Size и для Path и для ResourceType.FILE (просто тест)
-    public FileSystemItemResponseDto move(Long id, String currentPath, String newPath) {
-        String folderName = extractResourceName(newPath, false);
-        minioClientService.copyObject(id, currentPath, newPath);
-        delete(id, currentPath);
 
-        return new FileSystemItemResponseDto(
-                newPath,
-                folderName,
-                0L,
-                ResourceType.FILE
-        );
+    public FileSystemItemResponseDto move(Long id, String currentPath, String newPath) {
+        return newPath.endsWith("/") ?
+                moveFolder(currentPath, newPath, id) :
+                moveFile(currentPath, newPath, id);
     }
 
     private FileSystemItemResponseDto buildDto(StatObjectResponse object, Long id) {
@@ -142,6 +135,7 @@ public class ResourceService {
 
     private boolean isFileExists(Long id, String path) {
         Optional<StatObjectResponse> existingFile = minioClientService.statObject(id, path);
+
         if (existingFile.isPresent()) {
             return true;
         }
@@ -155,8 +149,7 @@ public class ResourceService {
 
         if (!uniqueFolders.isEmpty()) {
             for (String folderName : uniqueFolders) {
-                String resourcePath = folderName;
-                minioClientService.putDirectory(id, resourcePath);
+                minioClientService.putDirectory(id, folderName);
             }
         }
 
@@ -208,6 +201,23 @@ public class ResourceService {
         return uniqueFolders;
     }
 
+    //TODO подумай как избавиться от дублирования кода здесь (с методом выше)
+    private Set<String> getUniqueFolders(List<Item> items, String newPath) {
+        Set<String> uniqueFolders = new HashSet<>();
+
+        for (Item item : items) {
+            String resourceName = extractResourceName(item.objectName(), false);
+            String fullPath = newPath + resourceName;
+            for (int i = 0; i < fullPath.length(); i++) {
+                if (fullPath.charAt(i) == '/') {
+                    uniqueFolders.add(fullPath.substring(0, i + 1));
+                }
+            }
+        }
+        return uniqueFolders;
+    }
+
+
     //TODO кастомное исключение
     private StreamingResponseBody downloadFile(Long id, String path) {
         return outputStream -> {
@@ -255,5 +265,58 @@ public class ResourceService {
         }
     }
 
+    private FileSystemItemResponseDto moveFile(String currentPath, String newPath, Long id) {
+        String folderName = extractResourceName(newPath, false);
+        long size = minioClientService.statObject(id, currentPath)
+                .map(StatObjectResponse::size)
+                .orElseThrow(() -> new ResourceNotFoundException("Resource not found"));
+
+        minioClientService.copyObject(id, currentPath, newPath);
+        delete(id, currentPath);
+
+        return new FileSystemItemResponseDto(
+                buildParentPath(newPath),
+                folderName,
+                size,
+                ResourceType.FILE
+        );
+    }
+
+
+    private FileSystemItemResponseDto moveFolder(String currentPath, String newPath, long id) {
+        String folderName = extractResourceName(newPath, true);
+
+        Iterable<Result<Item>> minioObjects = minioClientService.getListObjects(id, currentPath, TraversalMode.RECURSIVE);
+        List<Item> items = directoryService.extractAndFilterItemsFromMinio(minioObjects, id, currentPath);
+
+        if (items.isEmpty()) {
+            minioClientService.copyObject(id, currentPath, newPath);
+            minioClientService.putDirectory(id, newPath);
+        }
+
+        Set<String> uniqueFolders = getUniqueFolders(items, newPath);
+
+        if (!uniqueFolders.isEmpty()) {
+            for (String name : uniqueFolders) {
+                minioClientService.putDirectory(id, name);
+            }
+        }
+
+        for (Item item : items) {
+            String relativeResourcePath = buildRelativeResourcePath(item, currentPath, id);
+            String fullCurrentPath = currentPath + relativeResourcePath;
+            String fullNewPath = newPath + relativeResourcePath;
+            minioClientService.copyObject(id, fullCurrentPath, fullNewPath);
+        }
+        delete(id, currentPath);
+
+        return new FileSystemItemResponseDto(
+                buildParentPath(newPath),
+                folderName,
+                0L,
+                ResourceType.DIRECTORY
+        );
+
+    }
 
 }
