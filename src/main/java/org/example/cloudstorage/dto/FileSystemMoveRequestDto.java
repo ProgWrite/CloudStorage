@@ -1,5 +1,11 @@
 package org.example.cloudstorage.dto;
 
 
-public record FileSystemMoveRequestDto(String from, String to) {
+import jakarta.validation.constraints.Pattern;
+
+public record FileSystemMoveRequestDto(
+        @Pattern(regexp = "^[^\\\\:*?\"<>|]*$", message = "Path contains invalid characters")
+        String from,
+        @Pattern(regexp = "^[^\\\\:*?\"<>|]*$", message = "Path contains invalid characters")
+        String to) {
 }

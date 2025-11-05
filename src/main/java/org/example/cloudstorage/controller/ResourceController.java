@@ -89,9 +89,8 @@ public class ResourceController {
 
     }
 
-    //TODO позже добавь @Valid как в других контролерах.
     @GetMapping("/resource/move")
-    public ResponseEntity<FileSystemItemResponseDto> moveResource(FileSystemMoveRequestDto fileMoveDto,
+    public ResponseEntity<FileSystemItemResponseDto> moveResource(@Valid FileSystemMoveRequestDto fileMoveDto,
                                                                   @AuthenticationPrincipal UserDetails userDetails){
         Optional<User> user = userRepository.findByUsername(userDetails.getUsername());
         Long id = user.get().getId();

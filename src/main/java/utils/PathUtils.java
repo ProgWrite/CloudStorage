@@ -35,6 +35,7 @@ public class PathUtils {
         return path.replace("user-"+id+"-files/","");
     }
 
+    //TODO 3 похожих метода! Надо что-то придумать
     public static boolean isPathValid(String path){
         if(path.startsWith("/")) {
             return false;
@@ -58,6 +59,17 @@ public class PathUtils {
         if(hasMultipleSlashes(path)){
             return false;
         }
+        return true;
+    }
+
+    public static boolean isPathValidToMove(String path){
+        if(path.startsWith("/")) {
+            return false;
+        }
+        if(hasMultipleSlashes(path)){
+            return false;
+        }
+
         return true;
     }
 

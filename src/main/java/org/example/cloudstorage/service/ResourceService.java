@@ -98,8 +98,57 @@ public class ResourceService {
         return downloadFile(id, path);
     }
 
-
+    // TODO подумай куда вынести всю валидацию (её здесь очень много)
     public FileSystemItemResponseDto move(Long id, String currentPath, String newPath) {
+        if (!isPathValidToMove(currentPath)) {
+            throw new InvalidPathException("Invalid current path");
+        }
+
+        if (!isPathValidToMove(newPath)) {
+            throw new InvalidPathException("Invalid new path");
+        }
+
+        String parentCurrentPath = buildParentPath(currentPath);
+            String parentNewPath = buildParentPath(newPath);
+
+        if (!minioClientService.isPathExists(id, parentCurrentPath)) {
+            throw new ResourceNotFoundException("Current path with this name not found");
+        }
+
+        if (!minioClientService.isPathExists(id, parentNewPath)) {
+            throw new ResourceNotFoundException("New path with this name not found");
+        }
+
+        //TODO может надо несколько проверок (еще и новый путь)
+        if (!isResourceExists(id, parentCurrentPath, currentPath)) {
+            throw new ResourceNotFoundException("Resource with this name not found");
+        }
+
+        if(!currentPath.endsWith("/")) {
+            if(newPath.endsWith("/")) {
+                throw new InvalidPathException("New path should end with resource name");
+            }
+        }
+
+        if(currentPath.endsWith("/")) {
+            if(!newPath.endsWith("/")) {
+                throw new InvalidPathException("New path for folders should end with /");
+            }
+        }
+
+        if(!parentCurrentPath.equals(parentNewPath)) {
+            String currentResourceName = extractResourceName(currentPath, false);
+            String newResourceName = extractResourceName(newPath, false);
+
+            if(!currentResourceName.equals(newResourceName)){
+                throw new InvalidPathException("Cannot change resource name during move operation");
+            }
+        }
+
+        if(isResourceExists(id, parentNewPath, newPath)) {
+            throw new ResourceExistsException("Resource with this name already exists");
+        }
+
         return newPath.endsWith("/") ?
                 moveFolder(currentPath, newPath, id) :
                 moveFile(currentPath, newPath, id);
@@ -318,5 +367,32 @@ public class ResourceService {
         );
 
     }
+
+    public boolean isResourceExists(Long id, String parentPath, String path) {
+        List<FileSystemItemResponseDto> currentDirectory = directoryService.getDirectory(id, parentPath, TraversalMode.NON_RECURSIVE);
+        boolean isTrailingSlash = checkTrailingSlash(parentPath, path);
+        String resourceName = extractResourceName(path, isTrailingSlash);
+
+        for (FileSystemItemResponseDto dto : currentDirectory) {
+            if (dto.name().equals(resourceName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    private boolean checkTrailingSlash(String parentPath, String path) {
+        if(path.endsWith("/") ) {
+            return true;
+        }
+        if(parentPath.equals("") && path.endsWith("/")) {
+            return true;
+        }
+        return false;
+    }
+
+
+
 
 }
