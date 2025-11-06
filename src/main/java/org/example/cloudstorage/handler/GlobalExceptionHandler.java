@@ -5,10 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.example.cloudstorage.dto.ErrorResponseDto;
-import org.example.cloudstorage.exception.InvalidPathException;
-import org.example.cloudstorage.exception.ResourceExistsException;
-import org.example.cloudstorage.exception.ResourceNotFoundException;
-import org.example.cloudstorage.exception.UserExistsException;
+import org.example.cloudstorage.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -34,21 +31,21 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserExistsException.class)
-    public ResponseEntity<ErrorResponseDto> handleUserAlreadyExists(UserExistsException exception){
+    public ResponseEntity<ErrorResponseDto> handleUserAlreadyExists(UserExistsException exception) {
         log.warn("USER ALREADY EXISTS");
         ErrorResponseDto error = buildError(exception);
         return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(InternalAuthenticationServiceException.class)
-    public ResponseEntity<ErrorResponseDto> userNotFound(InternalAuthenticationServiceException exception){
+    public ResponseEntity<ErrorResponseDto> userNotFound(InternalAuthenticationServiceException exception) {
         log.warn("USER NOT FOUND");
         ErrorResponseDto error = buildError(exception);
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ErrorResponseDto> wrongPassword(BadCredentialsException exception){
+    public ResponseEntity<ErrorResponseDto> wrongPassword(BadCredentialsException exception) {
         log.warn("USER NOT FOUND");
         ErrorResponseDto error = buildError(exception);
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
@@ -64,33 +61,32 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(InvalidPathException.class)
-    public ResponseEntity<ErrorResponseDto> InvalidPath(InvalidPathException exception){
+    public ResponseEntity<ErrorResponseDto> InvalidPath(InvalidPathException exception) {
         log.warn("INVALID PATH");
         ErrorResponseDto error = buildError(exception);
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ErrorResponseDto> ResourceNotFound(ResourceNotFoundException exception){
+    public ResponseEntity<ErrorResponseDto> ResourceNotFound(ResourceNotFoundException exception) {
         log.warn("RESOURCE NOT FOUND");
         ErrorResponseDto error = buildError(exception);
         return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(MultipartException.class)
-    public ResponseEntity<ErrorResponseDto> handleMultipartException(MultipartException exception){
+    public ResponseEntity<ErrorResponseDto> handleMultipartException(MultipartException exception) {
         log.warn("Request must contain a file");
         ErrorResponseDto error = buildError(exception);
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(ResourceExistsException.class)
-    public ResponseEntity<ErrorResponseDto> handleResourceExistsException(ResourceExistsException exception){
+    public ResponseEntity<ErrorResponseDto> handleResourceExistsException(ResourceExistsException exception) {
         log.warn("Resource already exists");
         ErrorResponseDto error = buildError(exception);
         return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
-
 
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -109,13 +105,13 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    private ErrorResponseDto buildError(RuntimeException exception){
+    private ErrorResponseDto buildError(RuntimeException exception) {
         return new ErrorResponseDto(
                 exception.getMessage()
         );
     }
 
-    private String buildValidationErrorMessage(MethodArgumentNotValidException exception){
+    private String buildValidationErrorMessage(MethodArgumentNotValidException exception) {
         BindingResult bindingResult = exception.getBindingResult();
         List<String> errors = new ArrayList<>();
 

@@ -2,10 +2,7 @@ package org.example.cloudstorage.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.example.cloudstorage.dto.FileSystemDeleteRequestDto;
-import org.example.cloudstorage.dto.FileSystemItemRequestDto;
-import org.example.cloudstorage.dto.FileSystemItemResponseDto;
-import org.example.cloudstorage.dto.FileSystemMoveRequestDto;
+import org.example.cloudstorage.dto.*;
 import org.example.cloudstorage.model.User;
 import org.example.cloudstorage.repository.UserRepository;
 import org.example.cloudstorage.service.ResourceService;
@@ -91,15 +88,22 @@ public class ResourceController {
 
     @GetMapping("/resource/move")
     public ResponseEntity<FileSystemItemResponseDto> moveResource(@Valid FileSystemMoveRequestDto fileMoveDto,
-                                                                  @AuthenticationPrincipal UserDetails userDetails){
+                                                                  @AuthenticationPrincipal UserDetails userDetails) {
         Optional<User> user = userRepository.findByUsername(userDetails.getUsername());
         Long id = user.get().getId();
-        FileSystemItemResponseDto resource = resourceService.move(id, fileMoveDto.from(),  fileMoveDto.to());
+        FileSystemItemResponseDto resource = resourceService.move(id, fileMoveDto.from(), fileMoveDto.to());
 
         return ResponseEntity.ok(resource);
     }
 
-
+    @GetMapping("/resource/search")
+    public ResponseEntity<List<FileSystemItemResponseDto>> moveResource(@Valid FileSystemSearchRequestDto dto,
+                                                                  @AuthenticationPrincipal UserDetails userDetails) {
+        Optional<User> user = userRepository.findByUsername(userDetails.getUsername());
+        Long id = user.get().getId();
+        List<FileSystemItemResponseDto> queryResults = resourceService.search(id, dto.query());
+        return ResponseEntity.status(HttpStatus.OK).body(queryResults);
+    }
 
 }
 

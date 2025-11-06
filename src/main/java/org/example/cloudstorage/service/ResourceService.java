@@ -123,39 +123,46 @@ public class ResourceService {
             throw new ResourceNotFoundException("Resource with this name not found");
         }
 
-        if(!currentPath.endsWith("/")) {
-            if(newPath.endsWith("/")) {
+        if (!currentPath.endsWith("/")) {
+            if (newPath.endsWith("/")) {
                 throw new InvalidPathException("New path should end with resource name");
             }
         }
 
-        if(currentPath.endsWith("/")) {
-            if(!newPath.endsWith("/")) {
+        if (currentPath.endsWith("/")) {
+            if (!newPath.endsWith("/")) {
                 throw new InvalidPathException("New path for folders should end with /");
             }
         }
 
-        if(!parentCurrentPath.equals(parentNewPath)) {
+        if (!parentCurrentPath.equals(parentNewPath)) {
             String currentResourceName = extractResourceName(currentPath, false);
             String newResourceName = extractResourceName(newPath, false);
 
-            if(!currentResourceName.equals(newResourceName)){
+            if (!currentResourceName.equals(newResourceName)) {
                 throw new InvalidPathException("Cannot change resource name during move operation");
             }
         }
 
-        if(newPath.startsWith(currentPath) && newPath.length() > currentPath.length()
-        && currentPath.endsWith("/") && newPath.endsWith("/")) {
+        if (newPath.startsWith(currentPath) && newPath.length() > currentPath.length()
+                && currentPath.endsWith("/") && newPath.endsWith("/")) {
             throw new InvalidPathException("Cannot move folder into its own subfolder");
         }
 
-        if(isResourceExists(id, parentNewPath, newPath)) {
+        if (isResourceExists(id, parentNewPath, newPath)) {
             throw new ResourceExistsException("Resource with this name already exists");
         }
 
         return newPath.endsWith("/") ?
                 moveFolder(currentPath, newPath, id) :
                 moveFile(currentPath, newPath, id);
+    }
+
+    public List<FileSystemItemResponseDto> search(Long id, String query) {
+        Iterable<Result<Item>> minioObjects = minioClientService.getListObjects(id, "", TraversalMode.RECURSIVE);
+        List<Item> items = directoryService.extractAndFilterItemsFromMinio(minioObjects, id, "");
+
+        return searchResources(items, id, query);
     }
 
     private FileSystemItemResponseDto buildDto(StatObjectResponse object, Long id) {
@@ -385,18 +392,37 @@ public class ResourceService {
         return false;
     }
 
-
     private boolean checkTrailingSlash(String parentPath, String path) {
-        if(path.endsWith("/") ) {
+        if (path.endsWith("/")) {
             return true;
         }
-        if(parentPath.equals("") && path.endsWith("/")) {
+        if (parentPath.equals("") && path.endsWith("/")) {
             return true;
         }
         return false;
     }
 
+    private List<FileSystemItemResponseDto> searchResources(List<Item> items, Long id, String query) {
+        List<FileSystemItemResponseDto> queryResults = new ArrayList<>();
 
+        for (Item item : items) {
+            String relativePath = deleteRootPath(item.objectName(), id);
+            boolean isTrailingSlash = relativePath.endsWith("/") || relativePath.equals("");
+            String resourceName = extractResourceName(relativePath, isTrailingSlash);
+
+            if (resourceName.toLowerCase().contains(query.toLowerCase())) {
+                String parentPath = buildParentPath(relativePath);
+
+                queryResults.add(new FileSystemItemResponseDto(
+                        parentPath,
+                        resourceName,
+                        item.size(),
+                        resourceName.endsWith("/") ? ResourceType.DIRECTORY : ResourceType.FILE
+                ));
+            }
+        }
+        return queryResults;
+    }
 
 
 }
