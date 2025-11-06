@@ -109,7 +109,7 @@ public class ResourceService {
         }
 
         String parentCurrentPath = buildParentPath(currentPath);
-            String parentNewPath = buildParentPath(newPath);
+        String parentNewPath = buildParentPath(newPath);
 
         if (!minioClientService.isPathExists(id, parentCurrentPath)) {
             throw new ResourceNotFoundException("Current path with this name not found");
@@ -119,7 +119,6 @@ public class ResourceService {
             throw new ResourceNotFoundException("New path with this name not found");
         }
 
-        //TODO может надо несколько проверок (еще и новый путь)
         if (!isResourceExists(id, parentCurrentPath, currentPath)) {
             throw new ResourceNotFoundException("Resource with this name not found");
         }
@@ -143,6 +142,11 @@ public class ResourceService {
             if(!currentResourceName.equals(newResourceName)){
                 throw new InvalidPathException("Cannot change resource name during move operation");
             }
+        }
+
+        if(newPath.startsWith(currentPath) && newPath.length() > currentPath.length()
+        && currentPath.endsWith("/") && newPath.endsWith("/")) {
+            throw new InvalidPathException("Cannot move folder into its own subfolder");
         }
 
         if(isResourceExists(id, parentNewPath, newPath)) {
