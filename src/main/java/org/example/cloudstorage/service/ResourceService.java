@@ -34,6 +34,7 @@ public class ResourceService {
     private static final int BUFFER_SIZE_1KB = 1024;
     private static final int START_OF_BUFFER = 0;
     private static final int END_OF_INPUT_STREAM = -1;
+    private static final String ROOT_PATH = "";
 
     public FileSystemItemResponseDto getResourceInfo(Long id, String path) {
         String backendPath = buildParentPath(path);
@@ -162,8 +163,8 @@ public class ResourceService {
     }
 
     public List<FileSystemItemResponseDto> search(Long id, String query) {
-        Iterable<Result<Item>> minioObjects = minioClientService.getListObjects(id, "", TraversalMode.RECURSIVE);
-        List<Item> items = directoryService.extractAndFilterItemsFromMinio(minioObjects, id, "");
+        Iterable<Result<Item>> minioObjects = minioClientService.getListObjects(id, ROOT_PATH, TraversalMode.RECURSIVE);
+        List<Item> items = directoryService.extractAndFilterItemsFromMinio(minioObjects, id, ROOT_PATH);
 
         return searchResources(items, id, query);
     }

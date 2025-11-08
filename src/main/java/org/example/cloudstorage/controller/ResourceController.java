@@ -87,8 +87,8 @@ public class ResourceController {
     }
 
     @GetMapping("/resource/move")
-    public ResponseEntity<FileSystemItemResponseDto> moveResource(@Valid FileSystemMoveRequestDto fileMoveDto,
-                                                                  @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<FileSystemItemResponseDto> move(@Valid FileSystemMoveRequestDto fileMoveDto,
+                                                            @AuthenticationPrincipal UserDetails userDetails) {
         Optional<User> user = userRepository.findByUsername(userDetails.getUsername());
         Long id = user.get().getId();
         FileSystemItemResponseDto resource = resourceService.move(id, fileMoveDto.from(), fileMoveDto.to());
@@ -97,7 +97,7 @@ public class ResourceController {
     }
 
     @GetMapping("/resource/search")
-    public ResponseEntity<List<FileSystemItemResponseDto>> moveResource(@Valid FileSystemSearchRequestDto dto,
+    public ResponseEntity<List<FileSystemItemResponseDto>> search(@Valid FileSystemSearchRequestDto dto,
                                                                   @AuthenticationPrincipal UserDetails userDetails) {
         Optional<User> user = userRepository.findByUsername(userDetails.getUsername());
         Long id = user.get().getId();
