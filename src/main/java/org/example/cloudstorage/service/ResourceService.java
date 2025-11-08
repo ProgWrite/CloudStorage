@@ -54,6 +54,9 @@ public class ResourceService {
         if (isFileExists(files, path, id)) {
             throw new ResourceExistsException("File with this name already exists");
         }
+        if (isResourceExists(id, path, files)) {
+            throw new ResourceExistsException("Resource with this name already exists in this directory");
+        }
 
         if (!minioClientService.isPathExists(id, path) && path.endsWith("/")) {
             return getUploadedFiles(files, id, path);
@@ -203,7 +206,6 @@ public class ResourceService {
     }
 
     private List<FileSystemItemResponseDto> getUploadedFiles(MultipartFile[] files, Long id, String path) {
-
         List<FileSystemItemResponseDto> uploadedFiles = new ArrayList<>();
         Set<String> uniqueFolders = getUniqueFolders(files, path, id);
 
@@ -391,6 +393,31 @@ public class ResourceService {
         }
         return false;
     }
+
+    //TODO подумай о дублировании названия метода (похож с прошлым)
+    public boolean isResourceExists(Long id, String path, MultipartFile[] files) {
+        if (files == null || files.length == 0 || files[0] == null) {
+            return false;
+        }
+
+        MultipartFile file = files[0];
+        String fileName = file.getOriginalFilename();
+        String folderName = fileName.substring(0, fileName.indexOf("/") + 1);
+
+        Iterable<Result<Item>> minioObjects = minioClientService.getListObjects(id, path, TraversalMode.NON_RECURSIVE);
+        List<Item> items = directoryService.extractAndFilterItemsFromMinio(minioObjects, id, path);
+
+        for (Item item : items) {
+            String objectName = item.objectName();
+            boolean isTrailingSlash = objectName.endsWith("/") || objectName.equals("");
+            String resourceName = extractResourceName(objectName, isTrailingSlash);
+            if (resourceName.equals(folderName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     private boolean checkTrailingSlash(String parentPath, String path) {
         if (path.endsWith("/")) {
