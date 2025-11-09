@@ -65,7 +65,7 @@ public class ResourceController {
 
     @GetMapping("/resource/download")
     public ResponseEntity<StreamingResponseBody> download(@Valid FileSystemItemRequestDto fileSystemDto,
-                                                          @AuthenticationPrincipal UserDetails userDetails) throws IOException {
+                                                          @AuthenticationPrincipal UserDetails userDetails){
         Optional<User> user = userRepository.findByUsername(userDetails.getUsername());
         Long id = user.get().getId();
         String resourceName = fileSystemDto.path();

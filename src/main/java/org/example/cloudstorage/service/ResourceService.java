@@ -84,23 +84,23 @@ public class ResourceService {
         }
     }
 
-    public StreamingResponseBody download(Long id, String path) throws IOException {
-        if (!isPathValidToDeleteOrDownload(path)) {
-            throw new InvalidPathException("Invalid path");
-        }
-
-        if (path.endsWith("/")) {
-            if (!minioClientService.isPathExists(id, path)) {
-                throw new ResourceNotFoundException("Folder with this name not found");
+        public StreamingResponseBody download(Long id, String path)  {
+            if (!isPathValidToDeleteOrDownload(path)) {
+                throw new InvalidPathException("Invalid path");
             }
-            return downloadFolder(id, path);
-        }
 
-        if (!isFileExists(id, path)) {
-            throw new ResourceNotFoundException("File with this name not found");
+            if (path.endsWith("/")) {
+                if (!minioClientService.isPathExists(id, path)) {
+                    throw new ResourceNotFoundException("Folder with this name not found");
+                }
+                return downloadFolder(id, path);
+            }
+
+            if (!isFileExists(id, path)) {
+                throw new ResourceNotFoundException("File with this name not found");
+            }
+            return downloadFile(id, path);
         }
-        return downloadFile(id, path);
-    }
 
     // TODO подумай куда вынести всю валидацию (её здесь очень много)
     public FileSystemItemResponseDto move(Long id, String currentPath, String newPath) {
