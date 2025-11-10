@@ -1,19 +1,13 @@
 package org.example.cloudstorage;
 
-
 import org.example.cloudstorage.dto.FileSystemItemResponseDto;
 import org.example.cloudstorage.dto.UserRegistrationRequestDto;
 import org.example.cloudstorage.dto.UserResponseDto;
 import org.example.cloudstorage.exception.InvalidPathException;
 import org.example.cloudstorage.exception.ResourceExistsException;
 import org.example.cloudstorage.exception.ResourceNotFoundException;
-import org.example.cloudstorage.service.DirectoryService;
-import org.example.cloudstorage.service.ResourceService;
-import org.example.cloudstorage.service.UserService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,8 +17,6 @@ import utils.TraversalMode;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class ResourceServiceIT extends AbstractIntegrationTest {
 
@@ -34,26 +26,6 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
     private static final int EXPECTED_FILES_AFTER_MOVING = 3;
     private static final int EXPECTED_QUERY_RESULTS = 2;
     private static final int EXPECTED_QUERY_RESULTS_FOR_SECOND_USER = 3;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private ResourceService resourceService;
-
-    @Autowired
-    private DirectoryService directoryService;
-
-    private UserResponseDto testUser;
-    private MultipartFile[] testFile;
-    private MultipartFile[] testFolder;
-
-    @BeforeEach
-    void setUp() {
-        testUser = createTestUser();
-        testFile = createTestFile();
-        testFolder = createTestFolder();
-    }
 
     @Nested
     class UploadTests {
@@ -610,15 +582,6 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
 
     }
 
-    private UserResponseDto createTestUser() {
-        UserRegistrationRequestDto user = new UserRegistrationRequestDto(
-                "TestUser",
-                "password",
-                "password"
-        );
-        return userService.create(user);
-    }
-
     private UserResponseDto createSecondTestUser() {
         UserRegistrationRequestDto user = new UserRegistrationRequestDto(
                 "TestUser2",
@@ -626,34 +589,6 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
                 "password"
         );
         return userService.create(user);
-    }
-
-    private MultipartFile[] createTestFile() {
-        return new MultipartFile[]{
-                new MockMultipartFile(
-                        "file1",
-                        "test-file-1.txt",
-                        "text/plain",
-                        "Hello World 1".getBytes()
-                )
-        };
-    }
-
-    private MultipartFile[] createTestFolder() {
-        return new MultipartFile[]{
-                new MockMultipartFile(
-                        "files", "docs/document1.txt", "text/plain", "Document 1 content".getBytes()
-                ),
-                new MockMultipartFile(
-                        "files", "docs/document2.pdf", "application/pdf", "PDF content".getBytes()
-                ),
-                new MockMultipartFile(
-                        "files", "docs/images/photo.jpg", "image/jpeg", "Fake image content".getBytes()
-                ),
-                new MockMultipartFile(
-                        "files", "docs/images/vacation.jpg", "image/jpeg", "Fake image content".getBytes()
-                )
-        };
     }
 
     private MultipartFile[] createExistedFolder() {
