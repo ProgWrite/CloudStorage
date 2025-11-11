@@ -21,6 +21,8 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.time.Duration;
+
 @Testcontainers
 @ActiveProfiles("test")
 @SpringBootTest
@@ -33,7 +35,9 @@ public abstract class AbstractIntegrationTest {
 
     @Container
     protected static final PostgreSQLContainer<?> POSTGRESQL_CONTAINER =
-            new PostgreSQLContainer<>("postgres:latest");
+            new PostgreSQLContainer<>("postgres:latest")
+                    .waitingFor(Wait.forLogMessage(".*database system is ready to accept connections.*\\n", 2))
+                    .withStartupTimeout(Duration.ofMinutes(2));
 
     @Container
     protected static final GenericContainer<?> MINIO_CONTAINER =

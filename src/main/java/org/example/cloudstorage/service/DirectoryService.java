@@ -3,7 +3,8 @@ package org.example.cloudstorage.service;
 import io.minio.Result;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
-import org.example.cloudstorage.dto.FileSystemItemResponseDto;
+import org.example.cloudstorage.dto.resourceResponseDto.ResourceResponseDto;
+import org.example.cloudstorage.dto.resourceResponseDto.FolderResponseDto;
 import org.example.cloudstorage.dto.ResourceType;
 import org.example.cloudstorage.exception.InvalidPathException;
 import org.example.cloudstorage.exception.ResourceExistsException;
@@ -24,13 +25,12 @@ import static utils.PathUtils.*;
 public class DirectoryService {
 
     private final MinioClientService minioClientService;
-    private final static long EMPTY_FOLDER_SIZE = 0L;
 
     public void createRootDirectory(Long id) {
         minioClientService.putRootDirectory(id);
     }
 
-    public FileSystemItemResponseDto createDirectory(Long id, String path) {
+    public FolderResponseDto createDirectory(Long id, String path) {
         if (!path.endsWith("/") || !isPathValid(path)) {
             throw new InvalidPathException("Invalid path.");
         }
@@ -48,11 +48,10 @@ public class DirectoryService {
         }
 
         minioClientService.putDirectory(id, path);
-        return new FileSystemItemResponseDto(parentPath, folderName, EMPTY_FOLDER_SIZE, ResourceType.DIRECTORY);
+        return new FolderResponseDto(parentPath, folderName, ResourceType.DIRECTORY);
     }
 
-
-    public List<FileSystemItemResponseDto> getDirectory(Long id, String path, TraversalMode traversalMode) {
+    public List<ResourceResponseDto> getDirectory(Long id, String path, TraversalMode traversalMode) {
         if (!isPathValid(path)) {
             throw new InvalidPathException("Invalid path");
         }
@@ -69,10 +68,10 @@ public class DirectoryService {
     }
 
     public boolean isFolderExists(Long id, String folderName, String parentPath) {
-        List<FileSystemItemResponseDto> files = getDirectory(id, parentPath, TraversalMode.NON_RECURSIVE);
+        List<ResourceResponseDto> files = getDirectory(id, parentPath, TraversalMode.NON_RECURSIVE);
         String folderNameWithSlash = folderName + "/";
 
-        for (FileSystemItemResponseDto file : files) {
+        for (ResourceResponseDto file : files) {
             if (file.name().equals(folderNameWithSlash)) {
                 return true;
             }

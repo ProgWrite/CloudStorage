@@ -1,7 +1,8 @@
 package org.example.cloudstorage;
 
 
-import org.example.cloudstorage.dto.FileSystemItemResponseDto;
+import org.example.cloudstorage.dto.resourceResponseDto.ResourceResponseDto;
+import org.example.cloudstorage.dto.resourceResponseDto.FolderResponseDto;
 import org.example.cloudstorage.exception.InvalidPathException;
 import org.example.cloudstorage.exception.ResourceExistsException;
 import org.example.cloudstorage.exception.ResourceNotFoundException;
@@ -26,10 +27,10 @@ public class DirectoryServiceIT extends AbstractIntegrationTest {
 
             resourceService.upload(testUser.id(), uploadedPath, testFolder);
 
-            List<FileSystemItemResponseDto> rootDirectoryNonRecursive =
+            List<ResourceResponseDto> rootDirectoryNonRecursive =
                     directoryService.getDirectory(testUser.id(), uploadedPath, TraversalMode.NON_RECURSIVE);
 
-            List<FileSystemItemResponseDto> rootDirectoryRecursive =
+            List<ResourceResponseDto> rootDirectoryRecursive =
                     directoryService.getDirectory(testUser.id(), uploadedPath, TraversalMode.RECURSIVE);
 
 
@@ -80,7 +81,7 @@ public class DirectoryServiceIT extends AbstractIntegrationTest {
             String fullPath = uploadedPath + folderName + "/";
 
             resourceService.upload(testUser.id(), uploadedPath, testFolder);
-            FileSystemItemResponseDto folder = directoryService.createDirectory(testUser.id(), fullPath);
+            FolderResponseDto folder = directoryService.createDirectory(testUser.id(), fullPath);
 
             assertNotNull(folder);
             assertEquals(folderName, folder.name());

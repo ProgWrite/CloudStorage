@@ -1,8 +1,8 @@
 package org.example.cloudstorage;
 
-import org.example.cloudstorage.dto.FileSystemItemResponseDto;
-import org.example.cloudstorage.dto.UserRegistrationRequestDto;
-import org.example.cloudstorage.dto.UserResponseDto;
+import org.example.cloudstorage.dto.*;
+import org.example.cloudstorage.dto.resourceResponseDto.FileResponseDto;
+import org.example.cloudstorage.dto.resourceResponseDto.ResourceResponseDto;
 import org.example.cloudstorage.exception.InvalidPathException;
 import org.example.cloudstorage.exception.ResourceExistsException;
 import org.example.cloudstorage.exception.ResourceNotFoundException;
@@ -36,8 +36,8 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             String expectedFileName = "test-file-1.txt";
             String resourcePath = path + expectedFileName;
 
-            List<FileSystemItemResponseDto> uploadedResources = resourceService.upload(testUser.id(), path, testFile);
-            FileSystemItemResponseDto resourceInfo = resourceService.getResourceInfo(testUser.id(), resourcePath);
+            List<ResourceResponseDto> uploadedResources = resourceService.upload(testUser.id(), path, testFile);
+            ResourceResponseDto resourceInfo = resourceService.getResourceInfo(testUser.id(), resourcePath);
 
             assertNotNull(uploadedResources);
             assertEquals(expectedFileName, resourceInfo.name());
@@ -50,7 +50,7 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             String wrongFileName = "test-file-3.txt";
             String wrongResourcePath = path + wrongFileName;
 
-            List<FileSystemItemResponseDto> uploadedResources = resourceService.upload(testUser.id(), path, testFile);
+            List<ResourceResponseDto> uploadedResources = resourceService.upload(testUser.id(), path, testFile);
 
             assertNotNull(uploadedResources);
 
@@ -67,7 +67,7 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             String expectedFileName = "test-file-1.txt";
             String missingResourcePath = missingPath + expectedFileName;
 
-            List<FileSystemItemResponseDto> uploadedResources = resourceService.upload(testUser.id(), correctPath, testFile);
+            List<ResourceResponseDto> uploadedResources = resourceService.upload(testUser.id(), correctPath, testFile);
 
             assertNotNull(uploadedResources);
 
@@ -114,7 +114,7 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
         }
 
         @Test
-        void shouldCreateNewFolderdAfterUploa() {
+        void shouldCreateNewFoldedAfterUpload() {
             String uploadedPath = "";
             MultipartFile[] newFolder = createNewTestFolder();
             String expectedPathForFolder = "memories/";
@@ -123,10 +123,10 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             resourceService.upload(testUser.id(), uploadedPath, testFolder);
             resourceService.upload(testUser.id(), uploadedPath, newFolder);
 
-            FileSystemItemResponseDto uploadedFile = resourceService.getResourceInfo(testUser.id(), expectedPathForFile);
+            ResourceResponseDto uploadedFile = resourceService.getResourceInfo(testUser.id(), expectedPathForFile);
             assertNotNull(uploadedFile);
 
-            List<FileSystemItemResponseDto> uploadedDirectory = directoryService.getDirectory(testUser.id(), expectedPathForFolder, TraversalMode.NON_RECURSIVE);
+            List<ResourceResponseDto> uploadedDirectory = directoryService.getDirectory(testUser.id(), expectedPathForFolder, TraversalMode.NON_RECURSIVE);
             assertNotNull(uploadedDirectory);
 
         }
@@ -139,7 +139,7 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
 
             resourceService.upload(testUser.id(), uploadedPath, testFolder);
 
-            FileSystemItemResponseDto uploadedFile = resourceService.getResourceInfo(testUser.id(), expectedPathForFile);
+            ResourceResponseDto uploadedFile = resourceService.getResourceInfo(testUser.id(), expectedPathForFile);
             assertNotNull(uploadedFile);
 
             InvalidPathException exception = assertThrows(InvalidPathException.class, () -> {
@@ -162,7 +162,7 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
 
             resourceService.upload(testUser.id(), path, testFile);
 
-            FileSystemItemResponseDto resourceInfo = resourceService.getResourceInfo(testUser.id(), resourcePath);
+            ResourceResponseDto resourceInfo = resourceService.getResourceInfo(testUser.id(), resourcePath);
             assertNotNull(resourceInfo);
             assertEquals(expectedFileName, resourceInfo.name());
 
@@ -181,12 +181,12 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
 
             resourceService.upload(testUser.id(), uploadedPath, testFolder);
 
-            List<FileSystemItemResponseDto> files = directoryService.getDirectory(testUser.id(), parentPath, TraversalMode.RECURSIVE);
+            List<ResourceResponseDto> files = directoryService.getDirectory(testUser.id(), parentPath, TraversalMode.RECURSIVE);
             assertEquals(EXPECTED_FILES_BEFORE_DELETE, files.size());
 
             resourceService.delete(testUser.id(), pathForDelete);
 
-            List<FileSystemItemResponseDto> filesAfterDelete = directoryService.getDirectory(testUser.id(), parentPath, TraversalMode.RECURSIVE);
+            List<ResourceResponseDto> filesAfterDelete = directoryService.getDirectory(testUser.id(), parentPath, TraversalMode.RECURSIVE);
             assertEquals(EXPECTED_FILES_AFTER_DELETE, filesAfterDelete.size());
 
         }
@@ -201,7 +201,7 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
 
             resourceService.upload(testUser.id(), path, testFile);
 
-            FileSystemItemResponseDto resourceInfo = resourceService.getResourceInfo(testUser.id(), resourcePath);
+            ResourceResponseDto resourceInfo = resourceService.getResourceInfo(testUser.id(), resourcePath);
             assertNotNull(resourceInfo);
             assertEquals(expectedFileName, resourceInfo.name());
 
@@ -222,7 +222,7 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
 
             resourceService.upload(testUser.id(), path, testFile);
 
-            FileSystemItemResponseDto resourceInfo = resourceService.getResourceInfo(testUser.id(), resourcePath);
+            ResourceResponseDto resourceInfo = resourceService.getResourceInfo(testUser.id(), resourcePath);
             assertNotNull(resourceInfo);
             assertEquals(expectedFileName, resourceInfo.name());
 
@@ -331,7 +331,7 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
 
             resourceService.upload(testUser.id(), uploadedPath, testFile);
             resourceService.move(testUser.id(), currentPath, newPath);
-            FileSystemItemResponseDto resourceInfo = resourceService.getResourceInfo(testUser.id(), newPath);
+            ResourceResponseDto resourceInfo = resourceService.getResourceInfo(testUser.id(), newPath);
 
 
             assertEquals(newFileName, resourceInfo.name());
@@ -353,12 +353,12 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             resourceService.upload(testUser.id(), uploadedPath, testFolder);
 
 
-            List<FileSystemItemResponseDto> filesBeforeMoving = directoryService.getDirectory(testUser.id(), movingPath, TraversalMode.NON_RECURSIVE);
+            List<ResourceResponseDto> filesBeforeMoving = directoryService.getDirectory(testUser.id(), movingPath, TraversalMode.NON_RECURSIVE);
             assertEquals(EXPECTED_FILES_BEFORE_MOVING, filesBeforeMoving.size());
 
             resourceService.move(testUser.id(), currentPath, newPath);
 
-            List<FileSystemItemResponseDto> filesAfterMoving = directoryService.getDirectory(testUser.id(), movingPath, TraversalMode.NON_RECURSIVE);
+            List<ResourceResponseDto> filesAfterMoving = directoryService.getDirectory(testUser.id(), movingPath, TraversalMode.NON_RECURSIVE);
             assertEquals(EXPECTED_FILES_AFTER_MOVING, filesAfterMoving.size());
 
 
@@ -380,10 +380,10 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             resourceService.upload(testUser.id(), uploadedPath, testFolder);
             resourceService.move(testUser.id(), currentPath, newPath);
 
-            List<FileSystemItemResponseDto> resources = directoryService.getDirectory(testUser.id(), newPath, TraversalMode.NON_RECURSIVE);
+            List<ResourceResponseDto> resources = directoryService.getDirectory(testUser.id(), newPath, TraversalMode.NON_RECURSIVE);
             assertNotNull(resources);
 
-            FileSystemItemResponseDto renamedFileInFolder = resourceService.getResourceInfo(testUser.id(), uploadedPath + expectedFileNameAfterRename);
+            ResourceResponseDto renamedFileInFolder = resourceService.getResourceInfo(testUser.id(), uploadedPath + expectedFileNameAfterRename);
             assertNotNull(renamedFileInFolder);
         }
 
@@ -399,10 +399,10 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             resourceService.upload(testUser.id(), uploadedPath, testFolder);
             resourceService.move(testUser.id(), currentPath, newPath);
 
-            List<FileSystemItemResponseDto> resources = directoryService.getDirectory(testUser.id(), newPath, TraversalMode.NON_RECURSIVE);
+            List<ResourceResponseDto> resources = directoryService.getDirectory(testUser.id(), newPath, TraversalMode.NON_RECURSIVE);
             assertNotNull(resources);
 
-            FileSystemItemResponseDto renamedFileInFolder = resourceService.getResourceInfo(testUser.id(), uploadedPath + expectedFileNameAfterRename);
+            ResourceResponseDto renamedFileInFolder = resourceService.getResourceInfo(testUser.id(), uploadedPath + expectedFileNameAfterRename);
             assertNotNull(renamedFileInFolder);
 
             assertThrows(ResourceNotFoundException.class, () -> {
@@ -559,7 +559,7 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
 
             resourceService.upload(testUser.id(), uploadedPath, testFolder);
 
-            List<FileSystemItemResponseDto> queryResults = resourceService.search(testUser.id(), query);
+            List<ResourceResponseDto> queryResults = resourceService.search(testUser.id(), query);
             assertEquals(EXPECTED_QUERY_RESULTS, queryResults.size());
 
         }
@@ -574,8 +574,8 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             resourceService.upload(testUser.id(), uploadedPath, testFolder);
             resourceService.upload(secondUser.id(), uploadedPath, folderForSecondUser);
 
-            List<FileSystemItemResponseDto> queryResultsFirstUser = resourceService.search(testUser.id(), query);
-            List<FileSystemItemResponseDto> queryResultsSecondUser = resourceService.search(secondUser.id(), query);
+            List<ResourceResponseDto> queryResultsFirstUser = resourceService.search(testUser.id(), query);
+            List<ResourceResponseDto> queryResultsSecondUser = resourceService.search(secondUser.id(), query);
             assertEquals(EXPECTED_QUERY_RESULTS, queryResultsFirstUser.size());
             assertEquals(EXPECTED_QUERY_RESULTS_FOR_SECOND_USER, queryResultsSecondUser.size());
         }

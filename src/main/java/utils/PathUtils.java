@@ -73,6 +73,7 @@ public class PathUtils {
         return true;
     }
 
+    //TODO противоречие с методом родителей в части ""
     private static boolean hasMultipleSlashes(String path){
         if(path.equals("")){
             return false;

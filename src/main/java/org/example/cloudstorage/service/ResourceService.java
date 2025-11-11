@@ -5,18 +5,22 @@ import io.minio.StatObjectResponse;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.compress.utils.IOUtils;
-import org.example.cloudstorage.dto.FileSystemItemResponseDto;
 import org.example.cloudstorage.dto.ResourceType;
+import org.example.cloudstorage.dto.resourceResponseDto.FileResponseDto;
+import org.example.cloudstorage.dto.resourceResponseDto.FolderResponseDto;
+import org.example.cloudstorage.dto.resourceResponseDto.ResourceResponseDto;
 import org.example.cloudstorage.exception.InvalidPathException;
 import org.example.cloudstorage.exception.ResourceExistsException;
 import org.example.cloudstorage.exception.ResourceNotFoundException;
+import org.example.cloudstorage.mapper.FileSystemItemMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
-import utils.PathUtils;
 import utils.TraversalMode;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -36,19 +40,29 @@ public class ResourceService {
     private static final int END_OF_INPUT_STREAM = -1;
     private static final String ROOT_PATH = "";
 
-    public FileSystemItemResponseDto getResourceInfo(Long id, String path) {
-        String backendPath = buildParentPath(path);
+    public ResourceResponseDto getResourceInfo(Long id, String path) {
+        String parentPath = buildParentPath(path);
 
-        if (minioClientService.isPathExists(id, backendPath)) {
+        if (path.equals(ROOT_PATH) || path.contains("//")) {
+            throw new InvalidPathException("Invalid path");
+        }
+
+        if (minioClientService.isPathExists(id, parentPath)) {
             return minioClientService.statObject(id, path)
-                    .map(object -> buildDto(object, id))
+                    .map(object -> FileSystemItemMapper.INSTANCE.statObjectToDto(object, id))
                     .orElseThrow(() -> new ResourceNotFoundException("Resource not found"));
         }
 
         throw new InvalidPathException("path does not exist");
     }
 
-    public List<FileSystemItemResponseDto> upload(Long id, String path, MultipartFile[] files) {
+    public List<ResourceResponseDto> upload(Long id, String path, MultipartFile[] files) {
+        MultipartFile file = files[0];
+
+        if(file.getOriginalFilename() == null || file.getOriginalFilename().isEmpty()) {
+            throw new InvalidPathException("File list cannot be empty");
+        }
+
         if (!isPathValid(path)) {
             throw new InvalidPathException("Invalid path");
         }
@@ -84,26 +98,26 @@ public class ResourceService {
         }
     }
 
-        public StreamingResponseBody download(Long id, String path)  {
-            if (!isPathValidToDeleteOrDownload(path)) {
-                throw new InvalidPathException("Invalid path");
-            }
-
-            if (path.endsWith("/")) {
-                if (!minioClientService.isPathExists(id, path)) {
-                    throw new ResourceNotFoundException("Folder with this name not found");
-                }
-                return downloadFolder(id, path);
-            }
-
-            if (!isFileExists(id, path)) {
-                throw new ResourceNotFoundException("File with this name not found");
-            }
-            return downloadFile(id, path);
+    public StreamingResponseBody download(Long id, String path) {
+        if (!isPathValidToDeleteOrDownload(path)) {
+            throw new InvalidPathException("Invalid path");
         }
 
+        if (path.endsWith("/")) {
+            if (!minioClientService.isPathExists(id, path)) {
+                throw new ResourceNotFoundException("Folder with this name not found");
+            }
+            return downloadFolder(id, path);
+        }
+
+        if (!isFileExists(id, path)) {
+            throw new ResourceNotFoundException("File with this name not found");
+        }
+        return downloadFile(id, path);
+    }
+
     // TODO подумай куда вынести всю валидацию (её здесь очень много)
-    public FileSystemItemResponseDto move(Long id, String currentPath, String newPath) {
+    public ResourceResponseDto move(Long id, String currentPath, String newPath) {
         if (!isPathValidToMove(currentPath)) {
             throw new InvalidPathException("Invalid current path");
         }
@@ -162,28 +176,13 @@ public class ResourceService {
                 moveFile(currentPath, newPath, id);
     }
 
-    public List<FileSystemItemResponseDto> search(Long id, String query) {
+    public List<ResourceResponseDto> search(Long id, String query) {
         Iterable<Result<Item>> minioObjects = minioClientService.getListObjects(id, ROOT_PATH, TraversalMode.RECURSIVE);
         List<Item> items = directoryService.extractAndFilterItemsFromMinio(minioObjects, id, ROOT_PATH);
 
         return searchResources(items, id, query);
     }
 
-    private FileSystemItemResponseDto buildDto(StatObjectResponse object, Long id) {
-
-        String fullName = object.object();
-        String relativePath = deleteRootPath(fullName, id);
-        String truePath = PathUtils.buildParentPath(relativePath);
-
-        String folderName = extractResourceName(fullName, false);
-
-        return new FileSystemItemResponseDto(
-                truePath,
-                folderName,
-                object.size(),
-                ResourceType.FILE
-        );
-    }
 
     private boolean isFileExists(MultipartFile[] files, String path, Long id) {
         for (MultipartFile file : files) {
@@ -206,8 +205,8 @@ public class ResourceService {
         return false;
     }
 
-    private List<FileSystemItemResponseDto> getUploadedFiles(MultipartFile[] files, Long id, String path) {
-        List<FileSystemItemResponseDto> uploadedFiles = new ArrayList<>();
+    private List<ResourceResponseDto> getUploadedFiles(MultipartFile[] files, Long id, String path) {
+        List<ResourceResponseDto> uploadedFiles = new ArrayList<>();
         Set<String> uniqueFolders = getUniqueFolders(files, path, id);
 
         if (!uniqueFolders.isEmpty()) {
@@ -219,7 +218,7 @@ public class ResourceService {
         for (MultipartFile file : files) {
             String fileName = file.getOriginalFilename();
             minioClientService.putFile(id, path, file);
-            uploadedFiles.add(new FileSystemItemResponseDto(
+            uploadedFiles.add(new FileResponseDto(
                             path,
                             fileName,
                             file.getSize(),
@@ -232,8 +231,8 @@ public class ResourceService {
 
 
     private void deleteFolder(Long id, String path) {
-        List<FileSystemItemResponseDto> files = directoryService.getDirectory(id, path, TraversalMode.NON_RECURSIVE);
-        for (FileSystemItemResponseDto file : files) {
+        List<ResourceResponseDto> files = directoryService.getDirectory(id, path, TraversalMode.NON_RECURSIVE);
+        for (ResourceResponseDto file : files) {
             String pathForDelete = path + file.name();
             if (pathForDelete.endsWith("/")) {
                 deleteFolder(id, pathForDelete);
@@ -328,7 +327,7 @@ public class ResourceService {
         }
     }
 
-    private FileSystemItemResponseDto moveFile(String currentPath, String newPath, Long id) {
+    private FileResponseDto moveFile(String currentPath, String newPath, Long id) {
         String folderName = extractResourceName(newPath, false);
         long size = minioClientService.statObject(id, currentPath)
                 .map(StatObjectResponse::size)
@@ -337,7 +336,7 @@ public class ResourceService {
         minioClientService.copyObject(id, currentPath, newPath);
         delete(id, currentPath);
 
-        return new FileSystemItemResponseDto(
+        return new FileResponseDto(
                 buildParentPath(newPath),
                 folderName,
                 size,
@@ -345,8 +344,7 @@ public class ResourceService {
         );
     }
 
-
-    private FileSystemItemResponseDto moveFolder(String currentPath, String newPath, long id) {
+    private FolderResponseDto moveFolder(String currentPath, String newPath, long id) {
         String folderName = extractResourceName(newPath, true);
 
         Iterable<Result<Item>> minioObjects = minioClientService.getListObjects(id, currentPath, TraversalMode.RECURSIVE);
@@ -373,21 +371,20 @@ public class ResourceService {
         }
         delete(id, currentPath);
 
-        return new FileSystemItemResponseDto(
+        return new FolderResponseDto(
                 buildParentPath(newPath),
                 folderName,
-                0L,
                 ResourceType.DIRECTORY
         );
 
     }
 
     public boolean isResourceExists(Long id, String parentPath, String path) {
-        List<FileSystemItemResponseDto> currentDirectory = directoryService.getDirectory(id, parentPath, TraversalMode.NON_RECURSIVE);
+        List<ResourceResponseDto> currentDirectory = directoryService.getDirectory(id, parentPath, TraversalMode.NON_RECURSIVE);
         boolean isTrailingSlash = checkTrailingSlash(parentPath, path);
         String resourceName = extractResourceName(path, isTrailingSlash);
 
-        for (FileSystemItemResponseDto dto : currentDirectory) {
+        for (ResourceResponseDto dto : currentDirectory) {
             if (dto.name().equals(resourceName)) {
                 return true;
             }
@@ -430,8 +427,8 @@ public class ResourceService {
         return false;
     }
 
-    private List<FileSystemItemResponseDto> searchResources(List<Item> items, Long id, String query) {
-        List<FileSystemItemResponseDto> queryResults = new ArrayList<>();
+    private List<ResourceResponseDto> searchResources(List<Item> items, Long id, String query) {
+        List<ResourceResponseDto> queryResults = new ArrayList<>();
 
         for (Item item : items) {
             String relativePath = deleteRootPath(item.objectName(), id);
@@ -441,12 +438,21 @@ public class ResourceService {
             if (resourceName.toLowerCase().contains(query.toLowerCase())) {
                 String parentPath = buildParentPath(relativePath);
 
-                queryResults.add(new FileSystemItemResponseDto(
-                        parentPath,
-                        resourceName,
-                        item.size(),
-                        resourceName.endsWith("/") ? ResourceType.DIRECTORY : ResourceType.FILE
-                ));
+                if (resourceName.endsWith("/")) {
+                    queryResults.add(new FolderResponseDto(
+                            parentPath,
+                            resourceName,
+                            ResourceType.DIRECTORY
+                    ));
+                } else {
+                    queryResults.add(new FileResponseDto(
+                            parentPath,
+                            resourceName,
+                            item.size(),
+                            ResourceType.FILE
+                    ));
+                }
+
             }
         }
         return queryResults;

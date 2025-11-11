@@ -4,7 +4,8 @@ package org.example.cloudstorage.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.cloudstorage.dto.FileSystemItemRequestDto;
-import org.example.cloudstorage.dto.FileSystemItemResponseDto;
+import org.example.cloudstorage.dto.resourceResponseDto.ResourceResponseDto;
+import org.example.cloudstorage.dto.resourceResponseDto.FolderResponseDto;
 import org.example.cloudstorage.model.User;
 import org.example.cloudstorage.repository.UserRepository;
 import org.example.cloudstorage.service.DirectoryService;
@@ -30,19 +31,17 @@ public class DirectoryController {
                                           @AuthenticationPrincipal UserDetails userDetails){
         Optional<User> user  = userRepository.findByUsername(userDetails.getUsername());
         Long id = user.get().getId();
-        List<FileSystemItemResponseDto> folder = directoryService.getDirectory(id, fileSystemDto.path(), TraversalMode.NON_RECURSIVE);
+        List<ResourceResponseDto> folder = directoryService.getDirectory(id, fileSystemDto.path(), TraversalMode.NON_RECURSIVE);
         return ResponseEntity.ok(folder);
     }
 
     @PostMapping("/directory")
-    public ResponseEntity<FileSystemItemResponseDto> createDirectory(@Valid FileSystemItemRequestDto fileSystemDto,
-                                                                     @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<FolderResponseDto> createDirectory(@Valid FileSystemItemRequestDto fileSystemDto,
+                                                             @AuthenticationPrincipal UserDetails userDetails) {
         Optional<User> user  = userRepository.findByUsername(userDetails.getUsername());
         Long id = user.get().getId();
-        FileSystemItemResponseDto folder = directoryService.createDirectory(id, fileSystemDto.path());
+        FolderResponseDto folder = directoryService.createDirectory(id, fileSystemDto.path());
         return ResponseEntity.status(HttpStatus.CREATED).body(folder);
     }
-
-
 
 }
