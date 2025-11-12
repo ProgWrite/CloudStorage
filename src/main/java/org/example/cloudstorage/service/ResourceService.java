@@ -9,6 +9,7 @@ import org.example.cloudstorage.dto.ResourceType;
 import org.example.cloudstorage.dto.resourceResponseDto.FileResponseDto;
 import org.example.cloudstorage.dto.resourceResponseDto.FolderResponseDto;
 import org.example.cloudstorage.dto.resourceResponseDto.ResourceResponseDto;
+import org.example.cloudstorage.exception.FileDownloadException;
 import org.example.cloudstorage.exception.InvalidPathException;
 import org.example.cloudstorage.exception.ResourceExistsException;
 import org.example.cloudstorage.exception.ResourceNotFoundException;
@@ -59,7 +60,7 @@ public class ResourceService {
     public List<ResourceResponseDto> upload(Long id, String path, MultipartFile[] files) {
         MultipartFile file = files[0];
 
-        if(file.getOriginalFilename() == null || file.getOriginalFilename().isEmpty()) {
+        if (file.getOriginalFilename() == null || file.getOriginalFilename().isEmpty()) {
             throw new InvalidPathException("File list cannot be empty");
         }
 
@@ -279,8 +280,6 @@ public class ResourceService {
         return uniqueFolders;
     }
 
-
-    //TODO кастомное исключение
     private StreamingResponseBody downloadFile(Long id, String path) {
         return outputStream -> {
             try (InputStream object = minioClientService.getObject(id, path)) {
@@ -290,7 +289,9 @@ public class ResourceService {
                     outputStream.write(data, START_OF_BUFFER, bytesRead);
                 }
             } catch (IOException e) {
-                throw new RuntimeException("Error downloading file");
+                throw new FileDownloadException(
+                        String.format("Failed to download file in path: '%s' for user %d", path, id)
+                );
             }
         };
     }
@@ -303,7 +304,6 @@ public class ResourceService {
         };
     }
 
-    //TODO кастомные исключения!
     private void buildZipFromItems(OutputStream output, String path, Long id, List<Item> items) throws IOException {
         try (ZipOutputStream zip = new ZipOutputStream(output)) {
             String parentPath = buildParentPath(path);

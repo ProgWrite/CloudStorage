@@ -1,7 +1,5 @@
 package org.example.cloudstorage.dto;
 
-//TODO возможно какую-либо валидацию!!!
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;

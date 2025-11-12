@@ -4,6 +4,7 @@ import io.minio.*;
 import io.minio.errors.MinioException;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
+import org.example.cloudstorage.exception.MinioOperationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,8 +29,6 @@ public class MinioClientService {
     @Value("${MINIO_BUCKET_NAME}")
     private String bucketName;
 
-
-    //TODO надо будет кастомное исключение
     public void putRootDirectory(Long id) {
         try {
             minioClient.putObject(
@@ -41,12 +40,13 @@ public class MinioClientService {
                             .build()
             );
         } catch (IOException | GeneralSecurityException | MinioException exception) {
-            throw new RuntimeException("Error creating RootFolder", exception);
+            throw new MinioOperationException(
+                    String.format("Failed to create root directory '%s' for user %d in bucket '%s'",
+                            buildRootPath(id), id, bucketName)
+            );
         }
     }
 
-    //TODO тут можно сделать общий метод (файлы + папки) в одном методе!!! И подумать о исключениях
-    //TODO надо будет кастомное исключение
     public void putDirectory(Long id, String path) {
         try {
             minioClient.putObject(
@@ -57,11 +57,13 @@ public class MinioClientService {
                             .build()
             );
         } catch (IOException | GeneralSecurityException | MinioException exception) {
-            throw new RuntimeException("Error creating Folder", exception);
+            throw new MinioOperationException(
+                    String.format("Failed to create directory in path: %s for user %d in bucket '%s'",
+                            buildRootPath(id) + path, id, bucketName)
+            );
         }
     }
 
-    //TODO надо будет кастомное исключение (соединить с предыдущим методом).
     public void putFile(Long id, String path, MultipartFile file) {
         try {
             minioClient.putObject(
@@ -73,7 +75,10 @@ public class MinioClientService {
                             .build()
             );
         } catch (IOException | GeneralSecurityException | MinioException exception) {
-            throw new RuntimeException("Error creating File", exception);
+            throw new MinioOperationException(
+                    String.format("Failed to create file in path: %s for user %d in bucket '%s'",
+                            buildRootPath(id) + path + file.getOriginalFilename(), id, bucketName)
+            );
         }
     }
 
@@ -108,12 +113,14 @@ public class MinioClientService {
                             .object(buildRootPath(id) + path)
                             .build());
         } catch (IOException | GeneralSecurityException | MinioException exception) {
-            throw new RuntimeException("Error deleting File", exception);
+            throw new MinioOperationException(
+                    String.format("Failed to delete object in path: %s for user %d in bucket '%s'",
+                            buildRootPath(id), id, bucketName)
+            );
         }
 
     }
 
-    //TODO надо будет кастомное исключение
     public InputStream getObject(Long id, String path) {
         try {
             return minioClient.getObject(
@@ -123,7 +130,10 @@ public class MinioClientService {
                             .build()
             );
         } catch (Exception exception) {
-            throw new RuntimeException("Error getting resource", exception);
+            throw new MinioOperationException(
+                    String.format("Failed to find object in path: %s for user %d in bucket '%s'",
+                            buildRootPath(id), id, bucketName)
+            );
         }
     }
 
@@ -136,9 +146,8 @@ public class MinioClientService {
         return results.iterator().hasNext();
     }
 
-    //TODO надо будет кастомное исключение
     public void copyObject(Long id, String currentPath, String newPath) {
-        try{
+        try {
             minioClient.copyObject(
                     CopyObjectArgs.builder()
                             .bucket(bucketName)
@@ -149,8 +158,11 @@ public class MinioClientService {
                                             .object(buildRootPath(id) + currentPath)
                                             .build())
                             .build());
-        }catch (Exception exception) {
-            throw new RuntimeException("Error moving resource", exception);
+        } catch (Exception exception) {
+            throw new MinioOperationException(
+                    String.format("Failed to copy object from current path: %s to new path: %s for user %d in bucket '%s'",
+                            currentPath, newPath, id, bucketName)
+            );
         }
 
     }

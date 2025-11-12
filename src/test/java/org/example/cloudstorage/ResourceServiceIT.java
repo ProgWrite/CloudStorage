@@ -1,7 +1,6 @@
 package org.example.cloudstorage;
 
-import org.example.cloudstorage.dto.*;
-import org.example.cloudstorage.dto.resourceResponseDto.FileResponseDto;
+import org.example.cloudstorage.dto.UserRegistrationRequestDto;
 import org.example.cloudstorage.dto.resourceResponseDto.ResourceResponseDto;
 import org.example.cloudstorage.exception.InvalidPathException;
 import org.example.cloudstorage.exception.ResourceExistsException;
@@ -36,8 +35,8 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             String expectedFileName = "test-file-1.txt";
             String resourcePath = path + expectedFileName;
 
-            List<ResourceResponseDto> uploadedResources = resourceService.upload(testUser.id(), path, testFile);
-            ResourceResponseDto resourceInfo = resourceService.getResourceInfo(testUser.id(), resourcePath);
+            List<ResourceResponseDto> uploadedResources = resourceService.upload(userId, path, testFile);
+            ResourceResponseDto resourceInfo = resourceService.getResourceInfo(userId, resourcePath);
 
             assertNotNull(uploadedResources);
             assertEquals(expectedFileName, resourceInfo.name());
@@ -50,12 +49,12 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             String wrongFileName = "test-file-3.txt";
             String wrongResourcePath = path + wrongFileName;
 
-            List<ResourceResponseDto> uploadedResources = resourceService.upload(testUser.id(), path, testFile);
+            List<ResourceResponseDto> uploadedResources = resourceService.upload(userId, path, testFile);
 
             assertNotNull(uploadedResources);
 
             assertThrows(ResourceNotFoundException.class, () -> {
-                resourceService.getResourceInfo(testUser.id(), wrongResourcePath);
+                resourceService.getResourceInfo(userId, wrongResourcePath);
             });
 
         }
@@ -67,12 +66,12 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             String expectedFileName = "test-file-1.txt";
             String missingResourcePath = missingPath + expectedFileName;
 
-            List<ResourceResponseDto> uploadedResources = resourceService.upload(testUser.id(), correctPath, testFile);
+            List<ResourceResponseDto> uploadedResources = resourceService.upload(userId, correctPath, testFile);
 
             assertNotNull(uploadedResources);
 
             assertThrows(InvalidPathException.class, () -> {
-                resourceService.getResourceInfo(testUser.id(), missingResourcePath);
+                resourceService.getResourceInfo(userId, missingResourcePath);
             });
 
         }
@@ -89,10 +88,10 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
                     )
             };
 
-            resourceService.upload(testUser.id(), uploadedPath, testFile);
+            resourceService.upload(userId, uploadedPath, testFile);
 
             ResourceExistsException exception = assertThrows(ResourceExistsException.class, () -> {
-                resourceService.upload(testUser.id(), uploadedPath, existedFile);
+                resourceService.upload(userId, uploadedPath, existedFile);
             });
 
             assertEquals("File with this name already exists", exception.getMessage());
@@ -103,10 +102,10 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             String uploadedPath = "";
             MultipartFile[] existedFolder = createExistedFolder();
 
-            resourceService.upload(testUser.id(), uploadedPath, testFolder);
+            resourceService.upload(userId, uploadedPath, testFolder);
 
             ResourceExistsException exception = assertThrows(ResourceExistsException.class, () -> {
-                resourceService.upload(testUser.id(), uploadedPath, existedFolder);
+                resourceService.upload(userId, uploadedPath, existedFolder);
             });
 
             assertEquals("Resource with this name already exists in this directory", exception.getMessage());
@@ -120,13 +119,13 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             String expectedPathForFolder = "memories/";
             String expectedPathForFile = "memories/best.txt";
 
-            resourceService.upload(testUser.id(), uploadedPath, testFolder);
-            resourceService.upload(testUser.id(), uploadedPath, newFolder);
+            resourceService.upload(userId, uploadedPath, testFolder);
+            resourceService.upload(userId, uploadedPath, newFolder);
 
-            ResourceResponseDto uploadedFile = resourceService.getResourceInfo(testUser.id(), expectedPathForFile);
+            ResourceResponseDto uploadedFile = resourceService.getResourceInfo(userId, expectedPathForFile);
             assertNotNull(uploadedFile);
 
-            List<ResourceResponseDto> uploadedDirectory = directoryService.getDirectory(testUser.id(), expectedPathForFolder, TraversalMode.NON_RECURSIVE);
+            List<ResourceResponseDto> uploadedDirectory = directoryService.getDirectory(userId, expectedPathForFolder, TraversalMode.NON_RECURSIVE);
             assertNotNull(uploadedDirectory);
 
         }
@@ -135,15 +134,15 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
         void shouldPreventUserFromReadingOtherUsersResources() {
             String uploadedPath = "";
             String expectedPathForFile = "docs/document1.txt";
-            UserResponseDto secondUser = createSecondTestUser();
+            Long secondUserId = createSecondTestUserAndGetId();
 
-            resourceService.upload(testUser.id(), uploadedPath, testFolder);
+            resourceService.upload(userId, uploadedPath, testFolder);
 
-            ResourceResponseDto uploadedFile = resourceService.getResourceInfo(testUser.id(), expectedPathForFile);
+            ResourceResponseDto uploadedFile = resourceService.getResourceInfo(userId, expectedPathForFile);
             assertNotNull(uploadedFile);
 
             InvalidPathException exception = assertThrows(InvalidPathException.class, () -> {
-                resourceService.getResourceInfo(secondUser.id(), expectedPathForFile);
+                resourceService.getResourceInfo(secondUserId, expectedPathForFile);
             });
 
             assertEquals("path does not exist", exception.getMessage());
@@ -160,16 +159,16 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             String expectedFileName = "test-file-1.txt";
             String resourcePath = path + expectedFileName;
 
-            resourceService.upload(testUser.id(), path, testFile);
+            resourceService.upload(userId, path, testFile);
 
-            ResourceResponseDto resourceInfo = resourceService.getResourceInfo(testUser.id(), resourcePath);
+            ResourceResponseDto resourceInfo = resourceService.getResourceInfo(userId, resourcePath);
             assertNotNull(resourceInfo);
             assertEquals(expectedFileName, resourceInfo.name());
 
-            resourceService.delete(testUser.id(), resourcePath);
+            resourceService.delete(userId, resourcePath);
 
             assertThrows(InvalidPathException.class, () -> {
-                resourceService.getResourceInfo(testUser.id(), resourcePath);
+                resourceService.getResourceInfo(userId, resourcePath);
             });
         }
 
@@ -179,14 +178,14 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             String parentPath = "docs/";
             String pathForDelete = "docs/images/";
 
-            resourceService.upload(testUser.id(), uploadedPath, testFolder);
+            resourceService.upload(userId, uploadedPath, testFolder);
 
-            List<ResourceResponseDto> files = directoryService.getDirectory(testUser.id(), parentPath, TraversalMode.RECURSIVE);
+            List<ResourceResponseDto> files = directoryService.getDirectory(userId, parentPath, TraversalMode.RECURSIVE);
             assertEquals(EXPECTED_FILES_BEFORE_DELETE, files.size());
 
-            resourceService.delete(testUser.id(), pathForDelete);
+            resourceService.delete(userId, pathForDelete);
 
-            List<ResourceResponseDto> filesAfterDelete = directoryService.getDirectory(testUser.id(), parentPath, TraversalMode.RECURSIVE);
+            List<ResourceResponseDto> filesAfterDelete = directoryService.getDirectory(userId, parentPath, TraversalMode.RECURSIVE);
             assertEquals(EXPECTED_FILES_AFTER_DELETE, filesAfterDelete.size());
 
         }
@@ -199,16 +198,16 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             String resourcePath = path + expectedFileName;
             String wrongResourcePath = invalidPath + expectedFileName;
 
-            resourceService.upload(testUser.id(), path, testFile);
+            resourceService.upload(userId, path, testFile);
 
-            ResourceResponseDto resourceInfo = resourceService.getResourceInfo(testUser.id(), resourcePath);
+            ResourceResponseDto resourceInfo = resourceService.getResourceInfo(userId, resourcePath);
             assertNotNull(resourceInfo);
             assertEquals(expectedFileName, resourceInfo.name());
 
-            resourceService.delete(testUser.id(), resourcePath);
+            resourceService.delete(userId, resourcePath);
 
             assertThrows(InvalidPathException.class, () -> {
-                resourceService.getResourceInfo(testUser.id(), wrongResourcePath);
+                resourceService.getResourceInfo(userId, wrongResourcePath);
             });
         }
 
@@ -220,15 +219,15 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             String wrongResourceName = "test-file-3.txt";
             String wrongResourcePath = path + wrongResourceName;
 
-            resourceService.upload(testUser.id(), path, testFile);
+            resourceService.upload(userId, path, testFile);
 
-            ResourceResponseDto resourceInfo = resourceService.getResourceInfo(testUser.id(), resourcePath);
+            ResourceResponseDto resourceInfo = resourceService.getResourceInfo(userId, resourcePath);
             assertNotNull(resourceInfo);
             assertEquals(expectedFileName, resourceInfo.name());
 
             ResourceNotFoundException exception = assertThrows(
                     ResourceNotFoundException.class,
-                    () -> resourceService.delete(testUser.id(), wrongResourcePath)
+                    () -> resourceService.delete(userId, wrongResourcePath)
             );
 
             assertEquals("File with this name not found", exception.getMessage());
@@ -239,11 +238,11 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             String uploadedPath = "";
             String nonExistentPath = "works/";
 
-            resourceService.upload(testUser.id(), uploadedPath, testFolder);
+            resourceService.upload(userId, uploadedPath, testFolder);
 
             ResourceNotFoundException exception = assertThrows(
                     ResourceNotFoundException.class,
-                    () -> resourceService.delete(testUser.id(), nonExistentPath)
+                    () -> resourceService.delete(userId, nonExistentPath)
             );
 
             assertEquals("Folder with this name not found", exception.getMessage());
@@ -261,8 +260,8 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             String filePath = path + fileName;
             String expectedContent = "Hello World 1";
 
-            resourceService.upload(testUser.id(), path, testFile);
-            StreamingResponseBody responseBody = resourceService.download(testUser.id(), filePath);
+            resourceService.upload(userId, path, testFile);
+            StreamingResponseBody responseBody = resourceService.download(userId, filePath);
 
             assertNotNull(responseBody);
 
@@ -276,9 +275,9 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
         void shouldDownloadFolderAsZipArchive() throws Exception {
             String uploadedPath = "";
             String folderPath = "docs/";
-            resourceService.upload(testUser.id(), uploadedPath, testFolder);
+            resourceService.upload(userId, uploadedPath, testFolder);
 
-            StreamingResponseBody responseBody = resourceService.download(testUser.id(), folderPath);
+            StreamingResponseBody responseBody = resourceService.download(userId, folderPath);
 
             MockHttpServletResponse response = new MockHttpServletResponse();
             responseBody.writeTo(response.getOutputStream());
@@ -291,11 +290,11 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             String uploadedPath = "";
             String nonExistentPath = "works/";
 
-            resourceService.upload(testUser.id(), uploadedPath, testFolder);
+            resourceService.upload(userId, uploadedPath, testFolder);
 
             ResourceNotFoundException exception = assertThrows(
                     ResourceNotFoundException.class,
-                    () -> resourceService.download(testUser.id(), nonExistentPath)
+                    () -> resourceService.download(userId, nonExistentPath)
             );
 
             assertEquals("Folder with this name not found", exception.getMessage());
@@ -307,11 +306,11 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             String nonExistentFileName = "fakeFile.txt";
             String nonExistentPath = uploadedPath + nonExistentFileName;
 
-            resourceService.upload(testUser.id(), uploadedPath, testFile);
+            resourceService.upload(userId, uploadedPath, testFile);
 
             ResourceNotFoundException exception = assertThrows(
                     ResourceNotFoundException.class,
-                    () -> resourceService.download(testUser.id(), nonExistentPath)
+                    () -> resourceService.download(userId, nonExistentPath)
             );
 
             assertEquals("File with this name not found", exception.getMessage());
@@ -329,15 +328,15 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             String currentPath = uploadedPath + currentFileName;
             String newPath = uploadedPath + newFileName;
 
-            resourceService.upload(testUser.id(), uploadedPath, testFile);
-            resourceService.move(testUser.id(), currentPath, newPath);
-            ResourceResponseDto resourceInfo = resourceService.getResourceInfo(testUser.id(), newPath);
+            resourceService.upload(userId, uploadedPath, testFile);
+            resourceService.move(userId, currentPath, newPath);
+            ResourceResponseDto resourceInfo = resourceService.getResourceInfo(userId, newPath);
 
 
             assertEquals(newFileName, resourceInfo.name());
 
             assertThrows(ResourceNotFoundException.class, () -> {
-                resourceService.getResourceInfo(testUser.id(), currentPath);
+                resourceService.getResourceInfo(userId, currentPath);
             });
 
         }
@@ -350,20 +349,20 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             String currentPath = uploadedPath + "docs/document1.txt";
             String newPath = uploadedPath + "docs/images/document1.txt";
 
-            resourceService.upload(testUser.id(), uploadedPath, testFolder);
+            resourceService.upload(userId, uploadedPath, testFolder);
 
 
-            List<ResourceResponseDto> filesBeforeMoving = directoryService.getDirectory(testUser.id(), movingPath, TraversalMode.NON_RECURSIVE);
+            List<ResourceResponseDto> filesBeforeMoving = directoryService.getDirectory(userId, movingPath, TraversalMode.NON_RECURSIVE);
             assertEquals(EXPECTED_FILES_BEFORE_MOVING, filesBeforeMoving.size());
 
-            resourceService.move(testUser.id(), currentPath, newPath);
+            resourceService.move(userId, currentPath, newPath);
 
-            List<ResourceResponseDto> filesAfterMoving = directoryService.getDirectory(testUser.id(), movingPath, TraversalMode.NON_RECURSIVE);
+            List<ResourceResponseDto> filesAfterMoving = directoryService.getDirectory(userId, movingPath, TraversalMode.NON_RECURSIVE);
             assertEquals(EXPECTED_FILES_AFTER_MOVING, filesAfterMoving.size());
 
 
             assertThrows(ResourceNotFoundException.class, () -> {
-                resourceService.getResourceInfo(testUser.id(), currentPath);
+                resourceService.getResourceInfo(userId, currentPath);
             });
 
         }
@@ -377,13 +376,13 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             String currentPath = uploadedPath + currentFolderName;
             String newPath = uploadedPath + newFolderName;
 
-            resourceService.upload(testUser.id(), uploadedPath, testFolder);
-            resourceService.move(testUser.id(), currentPath, newPath);
+            resourceService.upload(userId, uploadedPath, testFolder);
+            resourceService.move(userId, currentPath, newPath);
 
-            List<ResourceResponseDto> resources = directoryService.getDirectory(testUser.id(), newPath, TraversalMode.NON_RECURSIVE);
+            List<ResourceResponseDto> resources = directoryService.getDirectory(userId, newPath, TraversalMode.NON_RECURSIVE);
             assertNotNull(resources);
 
-            ResourceResponseDto renamedFileInFolder = resourceService.getResourceInfo(testUser.id(), uploadedPath + expectedFileNameAfterRename);
+            ResourceResponseDto renamedFileInFolder = resourceService.getResourceInfo(userId, uploadedPath + expectedFileNameAfterRename);
             assertNotNull(renamedFileInFolder);
         }
 
@@ -396,17 +395,17 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             String newPath = uploadedPath + movingFolder;
             String expectedFileNameAfterRename = "images/photo.jpg";
 
-            resourceService.upload(testUser.id(), uploadedPath, testFolder);
-            resourceService.move(testUser.id(), currentPath, newPath);
+            resourceService.upload(userId, uploadedPath, testFolder);
+            resourceService.move(userId, currentPath, newPath);
 
-            List<ResourceResponseDto> resources = directoryService.getDirectory(testUser.id(), newPath, TraversalMode.NON_RECURSIVE);
+            List<ResourceResponseDto> resources = directoryService.getDirectory(userId, newPath, TraversalMode.NON_RECURSIVE);
             assertNotNull(resources);
 
-            ResourceResponseDto renamedFileInFolder = resourceService.getResourceInfo(testUser.id(), uploadedPath + expectedFileNameAfterRename);
+            ResourceResponseDto renamedFileInFolder = resourceService.getResourceInfo(userId, uploadedPath + expectedFileNameAfterRename);
             assertNotNull(renamedFileInFolder);
 
             assertThrows(ResourceNotFoundException.class, () -> {
-                resourceService.getResourceInfo(testUser.id(), currentPath);
+                resourceService.getResourceInfo(userId, currentPath);
             });
 
         }
@@ -418,11 +417,11 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             String movingFolder = "salaries/";
             String newPath = uploadedPath + movingFolder;
 
-            resourceService.upload(testUser.id(), uploadedPath, testFolder);
+            resourceService.upload(userId, uploadedPath, testFolder);
 
             ResourceNotFoundException exception = assertThrows(
                     ResourceNotFoundException.class,
-                    () -> resourceService.move(testUser.id(), nonExistentCurrentPath, newPath));
+                    () -> resourceService.move(userId, nonExistentCurrentPath, newPath));
 
             assertEquals("Current path with this name not found", exception.getMessage());
 
@@ -435,11 +434,11 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             String currentPath = uploadedPath + movingPath;
             String nonExistentNewPath = "secrets/salaries/";
 
-            resourceService.upload(testUser.id(), uploadedPath, testFolder);
+            resourceService.upload(userId, uploadedPath, testFolder);
 
             ResourceNotFoundException exception = assertThrows(
                     ResourceNotFoundException.class,
-                    () -> resourceService.move(testUser.id(), currentPath, nonExistentNewPath));
+                    () -> resourceService.move(userId, currentPath, nonExistentNewPath));
 
             assertEquals("New path with this name not found", exception.getMessage());
 
@@ -453,11 +452,11 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             String currentPath = uploadedPath + nonExistentResourceName;
             String newPath = uploadedPath + newFileName;
 
-            resourceService.upload(testUser.id(), uploadedPath, testFolder);
+            resourceService.upload(userId, uploadedPath, testFolder);
 
             ResourceNotFoundException exception = assertThrows(
                     ResourceNotFoundException.class,
-                    () -> resourceService.move(testUser.id(), currentPath, newPath));
+                    () -> resourceService.move(userId, currentPath, newPath));
 
             assertEquals("Resource with this name not found", exception.getMessage());
 
@@ -470,11 +469,11 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             String currentPath = uploadedPath + "docs/document1.txt";
             String newPath = uploadedPath + "docs/images/";
 
-            resourceService.upload(testUser.id(), uploadedPath, testFolder);
+            resourceService.upload(userId, uploadedPath, testFolder);
 
             InvalidPathException exception = assertThrows(
                     InvalidPathException.class,
-                    () -> resourceService.move(testUser.id(), currentPath, newPath));
+                    () -> resourceService.move(userId, currentPath, newPath));
 
             assertEquals("New path should end with resource name", exception.getMessage());
 
@@ -488,11 +487,11 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             String currentPath = uploadedPath + movingPath;
             String newPath = uploadedPath + wrongMovingFolderName;
 
-            resourceService.upload(testUser.id(), uploadedPath, testFolder);
+            resourceService.upload(userId, uploadedPath, testFolder);
 
             InvalidPathException exception = assertThrows(
                     InvalidPathException.class,
-                    () -> resourceService.move(testUser.id(), currentPath, newPath));
+                    () -> resourceService.move(userId, currentPath, newPath));
 
             assertEquals("New path for folders should end with /", exception.getMessage());
         }
@@ -503,11 +502,11 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             String currentPath = uploadedPath + "docs/document1.txt";
             String newPath = uploadedPath + "docs/images/renamedFile.txt";
 
-            resourceService.upload(testUser.id(), uploadedPath, testFolder);
+            resourceService.upload(userId, uploadedPath, testFolder);
 
             InvalidPathException exception = assertThrows(
                     InvalidPathException.class,
-                    () -> resourceService.move(testUser.id(), currentPath, newPath));
+                    () -> resourceService.move(userId, currentPath, newPath));
 
             assertEquals("Cannot change resource name during move operation", exception.getMessage());
 
@@ -521,11 +520,11 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             String currentPath = uploadedPath + movingFolder;
             String newPath = uploadedPath + movingPath;
 
-            resourceService.upload(testUser.id(), uploadedPath, testFolder);
+            resourceService.upload(userId, uploadedPath, testFolder);
 
             InvalidPathException exception = assertThrows(
                     InvalidPathException.class,
-                    () -> resourceService.move(testUser.id(), currentPath, newPath));
+                    () -> resourceService.move(userId, currentPath, newPath));
 
             assertEquals("Cannot move folder into its own subfolder", exception.getMessage());
         }
@@ -538,11 +537,11 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             String currentPath = uploadedPath + movingFilePath;
             String newPath = uploadedPath + existingFilePath;
 
-            resourceService.upload(testUser.id(), uploadedPath, testFolder);
+            resourceService.upload(userId, uploadedPath, testFolder);
 
             ResourceExistsException exception = assertThrows(
                     ResourceExistsException.class,
-                    () -> resourceService.move(testUser.id(), currentPath, newPath));
+                    () -> resourceService.move(userId, currentPath, newPath));
 
             assertEquals("Resource with this name already exists", exception.getMessage());
         }
@@ -557,9 +556,9 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
             String uploadedPath = "";
             String query = "document";
 
-            resourceService.upload(testUser.id(), uploadedPath, testFolder);
+            resourceService.upload(userId, uploadedPath, testFolder);
 
-            List<ResourceResponseDto> queryResults = resourceService.search(testUser.id(), query);
+            List<ResourceResponseDto> queryResults = resourceService.search(userId, query);
             assertEquals(EXPECTED_QUERY_RESULTS, queryResults.size());
 
         }
@@ -568,27 +567,28 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
         void shouldSearchOnlyOwnResources() {
             String uploadedPath = "";
             String query = "document";
-            UserResponseDto secondUser = createSecondTestUser();
+            Long secondUserId = createSecondTestUserAndGetId();
             MultipartFile[] folderForSecondUser = createTestFolderForSecondUser();
 
-            resourceService.upload(testUser.id(), uploadedPath, testFolder);
-            resourceService.upload(secondUser.id(), uploadedPath, folderForSecondUser);
+            resourceService.upload(userId, uploadedPath, testFolder);
+            resourceService.upload(secondUserId, uploadedPath, folderForSecondUser);
 
-            List<ResourceResponseDto> queryResultsFirstUser = resourceService.search(testUser.id(), query);
-            List<ResourceResponseDto> queryResultsSecondUser = resourceService.search(secondUser.id(), query);
+            List<ResourceResponseDto> queryResultsFirstUser = resourceService.search(userId, query);
+            List<ResourceResponseDto> queryResultsSecondUser = resourceService.search(secondUserId, query);
             assertEquals(EXPECTED_QUERY_RESULTS, queryResultsFirstUser.size());
             assertEquals(EXPECTED_QUERY_RESULTS_FOR_SECOND_USER, queryResultsSecondUser.size());
         }
 
     }
 
-    private UserResponseDto createSecondTestUser() {
+    private Long createSecondTestUserAndGetId() {
         UserRegistrationRequestDto user = new UserRegistrationRequestDto(
                 "TestUser2",
                 "password",
                 "password"
         );
-        return userService.create(user);
+        userService.create(user);
+        return userRepository.findIdByUsername(user.getUsername());
     }
 
     private MultipartFile[] createExistedFolder() {

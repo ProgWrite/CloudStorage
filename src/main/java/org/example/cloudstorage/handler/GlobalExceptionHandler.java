@@ -5,7 +5,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.example.cloudstorage.dto.ErrorResponseDto;
-import org.example.cloudstorage.exception.*;
+import org.example.cloudstorage.exception.InvalidPathException;
+import org.example.cloudstorage.exception.ResourceExistsException;
+import org.example.cloudstorage.exception.ResourceNotFoundException;
+import org.example.cloudstorage.exception.UserExistsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -18,35 +21,34 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MultipartException;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-//TODO допиши в названиях методов handle
+
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserExistsException.class)
-    public ResponseEntity<ErrorResponseDto> handleUserAlreadyExists(UserExistsException exception) {
+    public ResponseEntity<ErrorResponseDto> handleUserAlreadyExistsException(UserExistsException exception) {
         log.warn("USER ALREADY EXISTS");
         ErrorResponseDto error = buildError(exception);
         return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(InternalAuthenticationServiceException.class)
-    public ResponseEntity<ErrorResponseDto> userNotFound(InternalAuthenticationServiceException exception) {
+    public ResponseEntity<ErrorResponseDto> handleUserNotFoundException(InternalAuthenticationServiceException exception) {
         log.warn("USER NOT FOUND");
         ErrorResponseDto error = buildError(exception);
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ErrorResponseDto> wrongPassword(BadCredentialsException exception) {
-        log.warn("USER NOT FOUND");
+    public ResponseEntity<ErrorResponseDto> handleWrongPasswordException(BadCredentialsException exception) {
+        log.warn("WRONG PASSWORD");
         ErrorResponseDto error = buildError(exception);
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
@@ -61,14 +63,14 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(InvalidPathException.class)
-    public ResponseEntity<ErrorResponseDto> InvalidPath(InvalidPathException exception) {
+    public ResponseEntity<ErrorResponseDto> handleInvalidPathException(InvalidPathException exception) {
         log.warn("INVALID PATH");
         ErrorResponseDto error = buildError(exception);
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ErrorResponseDto> ResourceNotFound(ResourceNotFoundException exception) {
+    public ResponseEntity<ErrorResponseDto> handleResourceNotFoundException(ResourceNotFoundException exception) {
         log.warn("RESOURCE NOT FOUND");
         ErrorResponseDto error = buildError(exception);
         return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);

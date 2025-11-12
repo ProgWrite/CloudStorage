@@ -25,13 +25,13 @@ public class DirectoryServiceIT extends AbstractIntegrationTest {
         void shouldCreateDirectory() {
             String uploadedPath = "";
 
-            resourceService.upload(testUser.id(), uploadedPath, testFolder);
+            resourceService.upload(userId, uploadedPath, testFolder);
 
             List<ResourceResponseDto> rootDirectoryNonRecursive =
-                    directoryService.getDirectory(testUser.id(), uploadedPath, TraversalMode.NON_RECURSIVE);
+                    directoryService.getDirectory(userId, uploadedPath, TraversalMode.NON_RECURSIVE);
 
             List<ResourceResponseDto> rootDirectoryRecursive =
-                    directoryService.getDirectory(testUser.id(), uploadedPath, TraversalMode.RECURSIVE);
+                    directoryService.getDirectory(userId, uploadedPath, TraversalMode.RECURSIVE);
 
 
             assertNotNull(rootDirectoryNonRecursive);
@@ -45,10 +45,10 @@ public class DirectoryServiceIT extends AbstractIntegrationTest {
             String uploadedPath = "";
             String nonExistentPath = "salaries/";
 
-            resourceService.upload(testUser.id(), uploadedPath, testFolder);
+            resourceService.upload(userId, uploadedPath, testFolder);
 
             ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
-                directoryService.getDirectory(testUser.id(), nonExistentPath, TraversalMode.RECURSIVE);
+                directoryService.getDirectory(userId, nonExistentPath, TraversalMode.RECURSIVE);
             });
 
             assertEquals("Folder with this name not found", exception.getMessage());
@@ -60,10 +60,10 @@ public class DirectoryServiceIT extends AbstractIntegrationTest {
             String uploadedPath = "";
             String invalidPath = "docs//";
 
-            resourceService.upload(testUser.id(), uploadedPath, testFolder);
+            resourceService.upload(userId, uploadedPath, testFolder);
 
             InvalidPathException exception = assertThrows(InvalidPathException.class, () -> {
-                directoryService.getDirectory(testUser.id(), invalidPath, TraversalMode.RECURSIVE);
+                directoryService.getDirectory(userId, invalidPath, TraversalMode.RECURSIVE);
             });
 
             assertEquals("Invalid path", exception.getMessage());
@@ -80,8 +80,8 @@ public class DirectoryServiceIT extends AbstractIntegrationTest {
             String folderName = "pictures";
             String fullPath = uploadedPath + folderName + "/";
 
-            resourceService.upload(testUser.id(), uploadedPath, testFolder);
-            FolderResponseDto folder = directoryService.createDirectory(testUser.id(), fullPath);
+            resourceService.upload(userId, uploadedPath, testFolder);
+            FolderResponseDto folder = directoryService.createDirectory(userId, fullPath);
 
             assertNotNull(folder);
             assertEquals(folderName, folder.name());
@@ -92,10 +92,10 @@ public class DirectoryServiceIT extends AbstractIntegrationTest {
             String uploadedPath = "";
             String nonExistentPath = "dreams/salaries/";
 
-            resourceService.upload(testUser.id(), uploadedPath, testFolder);
+            resourceService.upload(userId, uploadedPath, testFolder);
 
             ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
-                directoryService.createDirectory(testUser.id(), nonExistentPath);
+                directoryService.createDirectory(userId, nonExistentPath);
             });
 
             assertEquals("Parent path not found.", exception.getMessage());
@@ -107,10 +107,10 @@ public class DirectoryServiceIT extends AbstractIntegrationTest {
             String uploadedPath = "";
             String existentPath = "docs/images/";
 
-            resourceService.upload(testUser.id(), uploadedPath, testFolder);
+            resourceService.upload(userId, uploadedPath, testFolder);
 
             ResourceExistsException exception = assertThrows(ResourceExistsException.class, () -> {
-                directoryService.createDirectory(testUser.id(), existentPath);
+                directoryService.createDirectory(userId, existentPath);
             });
 
             assertEquals("Folder with this name already exists.", exception.getMessage());

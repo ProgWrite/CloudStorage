@@ -6,6 +6,7 @@ import io.minio.MinioClient;
 import io.minio.errors.MinioException;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import org.example.cloudstorage.exception.MinioOperationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -21,20 +22,21 @@ public class MinioInitializer {
     private String bucketName;
 
     @PostConstruct
-    public void init(){
+    public void init() {
         createBucket(bucketName);
     }
 
-    //TODO добавить кастомное исключение
-    private void createBucket(String bucketName){
-        try{
+    private void createBucket(String bucketName) {
+        try {
             boolean isBucketExists =
                     minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
             if (!isBucketExists) {
                 minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
             }
-        }catch (IOException |GeneralSecurityException | MinioException exception) {
-            throw new RuntimeException("Error creating bucket", exception);
+        } catch (IOException | GeneralSecurityException | MinioException exception) {
+            throw new MinioOperationException(
+                    String.format("Failed to create bucket with name %s", bucketName)
+            );
         }
 
     }

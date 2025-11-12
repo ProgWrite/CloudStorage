@@ -7,6 +7,7 @@ import org.example.cloudstorage.dto.resourceResponseDto.ResourceResponseDto;
 import org.example.cloudstorage.dto.resourceResponseDto.FolderResponseDto;
 import org.example.cloudstorage.dto.ResourceType;
 import org.example.cloudstorage.exception.InvalidPathException;
+import org.example.cloudstorage.exception.MinioOperationException;
 import org.example.cloudstorage.exception.ResourceExistsException;
 import org.example.cloudstorage.exception.ResourceNotFoundException;
 import org.example.cloudstorage.mapper.FileSystemItemMapper;
@@ -79,7 +80,6 @@ public class DirectoryService {
         return false;
     }
 
-    //TODO подумай о кастомном исключении здесь!!!
     public List<Item> extractAndFilterItemsFromMinio(Iterable<Result<Item>> minioObjects, Long id, String path) {
         List<Item> successfulItems = new ArrayList<>();
         try {
@@ -91,10 +91,9 @@ public class DirectoryService {
                 successfulItems.add(item);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new MinioOperationException("Failed to extract items from MinIO for user with id " + id + "and path " + path);
         }
         return successfulItems;
     }
-
 
 }

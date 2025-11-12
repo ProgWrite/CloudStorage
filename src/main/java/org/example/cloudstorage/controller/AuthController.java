@@ -17,6 +17,7 @@ import org.example.cloudstorage.dto.ErrorResponseDto;
 import org.example.cloudstorage.dto.UserAuthorizationRequestDto;
 import org.example.cloudstorage.dto.UserRegistrationRequestDto;
 import org.example.cloudstorage.dto.UserResponseDto;
+import org.example.cloudstorage.repository.UserRepository;
 import org.example.cloudstorage.service.DirectoryService;
 import org.example.cloudstorage.service.UserService;
 import org.springframework.http.HttpStatus;
@@ -28,11 +29,14 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Optional;
 
 @Slf4j
 @RequestMapping("/api/auth")
@@ -49,6 +53,7 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final UserService userService;
     private final DirectoryService directoryService;
+    private final UserRepository userRepository;
 
 
     @Operation(
@@ -141,14 +146,16 @@ public class AuthController {
             ),
     }
     )
+
     @PostMapping("/sign-up")
     public ResponseEntity<UserResponseDto> signUp(@Valid @RequestBody UserRegistrationRequestDto user, HttpServletRequest request,
                                                   HttpServletResponse response) {
         log.info("Attempting registration for user: {}", user.getUsername());
-        UserResponseDto responseDto = userService.create(user);
+        UserResponseDto userDto = userService.create(user);
         authenticateUser(user.getUsername(), user.getPassword(), request, response);
-        directoryService.createRootDirectory(responseDto.id());
-        return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
+        Long id = userRepository.findIdByUsername(user.getUsername());
+        directoryService.createRootDirectory(id);
+        return ResponseEntity.status(HttpStatus.CREATED).body(userDto);
     }
 
 

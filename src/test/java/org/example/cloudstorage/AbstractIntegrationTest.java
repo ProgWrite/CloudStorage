@@ -2,7 +2,7 @@ package org.example.cloudstorage;
 
 
 import org.example.cloudstorage.dto.UserRegistrationRequestDto;
-import org.example.cloudstorage.dto.UserResponseDto;
+import org.example.cloudstorage.repository.UserRepository;
 import org.example.cloudstorage.service.DirectoryService;
 import org.example.cloudstorage.service.ResourceService;
 import org.example.cloudstorage.service.UserService;
@@ -22,12 +22,14 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Duration;
+import java.util.Optional;
 
 @Testcontainers
 @ActiveProfiles("test")
 @SpringBootTest
 @Transactional
 public abstract class AbstractIntegrationTest {
+
 
     private static final String MINIO_USERNAME = "minioadmin";
     private static final String MINIO_PASSWORD = "minioadmin";
@@ -58,7 +60,10 @@ public abstract class AbstractIntegrationTest {
     @Autowired
     protected DirectoryService directoryService;
 
-    protected UserResponseDto testUser;
+    @Autowired
+    protected UserRepository userRepository;
+
+    protected Long userId;
     protected MultipartFile[] testFile;
     protected MultipartFile[] testFolder;
 
@@ -79,19 +84,23 @@ public abstract class AbstractIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        testUser = createTestUser();
+        userId = createUserAndGetId();
         testFile = createTestFile();
         testFolder = createTestFolder();
     }
 
-    protected UserResponseDto createTestUser() {
+    protected Long createUserAndGetId() {
         UserRegistrationRequestDto user = new UserRegistrationRequestDto(
                 "TestUser",
                 "password",
                 "password"
         );
-        return userService.create(user);
+
+        userService.create(user);
+        return userRepository.findIdByUsername(user.getUsername());
     }
+
+
 
     protected MultipartFile[] createTestFile() {
         return new MultipartFile[]{
