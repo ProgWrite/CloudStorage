@@ -15,9 +15,9 @@ import static utils.PathUtils.deleteRootPath;
 
 
 @Mapper
-public interface FileSystemItemMapper {
+public interface FileSystemMapper {
 
-    FileSystemItemMapper INSTANCE = Mappers.getMapper(FileSystemItemMapper.class);
+    FileSystemMapper INSTANCE = Mappers.getMapper(FileSystemMapper.class);
 
     default ResourceResponseDto itemToDto(Item item, String path) {
         boolean isDirectory = item.objectName().endsWith("/");

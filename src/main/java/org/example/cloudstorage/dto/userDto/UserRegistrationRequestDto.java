@@ -1,18 +1,19 @@
-package org.example.cloudstorage.dto;
+package org.example.cloudstorage.dto.userDto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import lombok.*;
-import org.example.cloudstorage.validation.PasswordMatches;
+import lombok.ToString;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
 @ToString
-//TODO эта аннотация вроде мешает работать фронтенду. Пока что не знаю почему.
-//@PasswordMatches
 public class UserRegistrationRequestDto {
 
     @NotBlank(message = "Tne username can't be blank")
@@ -26,5 +27,5 @@ public class UserRegistrationRequestDto {
             message = "The password must contain only allowed characters: letters, digits and special symbols")
     private String password;
 
-    private String confirmPassword;
+
 }

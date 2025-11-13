@@ -2,10 +2,9 @@ package org.example.cloudstorage.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.example.cloudstorage.dto.FileSystemDeleteRequestDto;
-import org.example.cloudstorage.dto.FileSystemItemRequestDto;
-import org.example.cloudstorage.dto.FileSystemMoveRequestDto;
-import org.example.cloudstorage.dto.FileSystemSearchRequestDto;
+import org.example.cloudstorage.dto.fileSystemRequestDto.FileSystemPathRequestDto;
+import org.example.cloudstorage.dto.fileSystemRequestDto.FileSystemMoveRequestDto;
+import org.example.cloudstorage.dto.fileSystemRequestDto.FileSystemSearchRequestDto;
 import org.example.cloudstorage.dto.resourceResponseDto.ResourceResponseDto;
 import org.example.cloudstorage.service.ResourceService;
 import org.example.cloudstorage.service.UserService;
@@ -15,7 +14,13 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
@@ -35,7 +40,7 @@ public class ResourceController {
     private final UserService userService;
 
     @GetMapping
-    public ResponseEntity<ResourceResponseDto> getResourceInfo(@Valid FileSystemItemRequestDto fileSystemDto,
+    public ResponseEntity<ResourceResponseDto> getResourceInfo(@Valid FileSystemPathRequestDto fileSystemDto,
                                                                @AuthenticationPrincipal UserDetails userDetails) {
         Long id = userService.getId(userDetails.getUsername());
         ResourceResponseDto resource = resourceService.getResourceInfo(id, fileSystemDto.path());
@@ -43,32 +48,31 @@ public class ResourceController {
     }
 
     @PostMapping
-    public ResponseEntity<List<ResourceResponseDto>> upload(@Valid FileSystemItemRequestDto fileSystemDto,
+    public ResponseEntity<List<ResourceResponseDto>> upload(@Valid FileSystemPathRequestDto fileSystemDto,
                                                             @RequestPart("object") MultipartFile[] file,
                                                             @AuthenticationPrincipal UserDetails userDetails) {
         Long id = userService.getId(userDetails.getUsername());
-        List<ResourceResponseDto> filesDto = resourceService.upload(id, fileSystemDto.path(), file);
-        return ResponseEntity.status(HttpStatus.CREATED).body(filesDto);
+        List<ResourceResponseDto> resources = resourceService.upload(id, fileSystemDto.path(), file);
+        return ResponseEntity.status(HttpStatus.CREATED).body(resources);
     }
 
     @DeleteMapping
     public ResponseEntity<Void> delete(@AuthenticationPrincipal UserDetails userDetails,
-                                       @Valid FileSystemDeleteRequestDto file) {
+                                       @Valid FileSystemPathRequestDto fileSystemDto) {
 
         Long id = userService.getId(userDetails.getUsername());
-        resourceService.delete(id, file.path());
+        resourceService.delete(id, fileSystemDto.path());
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/download")
-    public ResponseEntity<StreamingResponseBody> download(@Valid FileSystemItemRequestDto fileSystemDto,
+    public ResponseEntity<StreamingResponseBody> download(@Valid FileSystemPathRequestDto fileSystemDto,
                                                           @AuthenticationPrincipal UserDetails userDetails) {
 
         Long id = userService.getId(userDetails.getUsername());
         String resourceName = fileSystemDto.path();
         StreamingResponseBody responseBody = resourceService.download(id, resourceName);
 
-        //TODO тут будет изменение кода, буду передавать взамен isTrailingSlash FILE OR FOLDER.
         boolean isTrailingSlash = false;
         String correctName = extractResourceName(resourceName, isTrailingSlash);
 

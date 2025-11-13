@@ -1,7 +1,7 @@
 package org.example.cloudstorage;
 
 
-import org.example.cloudstorage.dto.UserRegistrationRequestDto;
+import org.example.cloudstorage.dto.userDto.UserRegistrationRequestDto;
 import org.example.cloudstorage.repository.UserRepository;
 import org.example.cloudstorage.service.DirectoryService;
 import org.example.cloudstorage.service.ResourceService;
@@ -22,7 +22,6 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Duration;
-import java.util.Optional;
 
 @Testcontainers
 @ActiveProfiles("test")
@@ -92,7 +91,6 @@ public abstract class AbstractIntegrationTest {
     protected Long createUserAndGetId() {
         UserRegistrationRequestDto user = new UserRegistrationRequestDto(
                 "TestUser",
-                "password",
                 "password"
         );
 

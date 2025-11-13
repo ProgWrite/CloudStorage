@@ -13,35 +13,16 @@ import utils.TraversalMode;
 import java.util.List;
 
 import static utils.PathUtils.*;
+import static utils.ValidationUtils.validateResourceName;
 
-//TODO корректно ли тут ставить компонент. Мб переименовать класс
 @RequiredArgsConstructor
 @Component
-public class ValidationUtils {
+public class MoveOperationValidator {
 
     private final MinioClientService minioClientService;
     private final DirectoryService directoryService;
-    public final static int MIN_FOLDER_NAME_LENGTH = 3;
-    public final static int MAX_FOLDER_NAME_LENGTH = 20;
-    private static final int UPLOADED_RESOURCE_NAME_MAX_LENGTH = 50;
 
-    public static void validateResourceName(String folderName) {
-        if (folderName.length() < MIN_FOLDER_NAME_LENGTH || folderName.length() > MAX_FOLDER_NAME_LENGTH) {
-            throw new InvalidPathException(String.format("Resource name must be between %d and %d characters",
-                    MIN_FOLDER_NAME_LENGTH, MAX_FOLDER_NAME_LENGTH));
-        }
-
-    }
-
-    public static void validateResourceNameForUpload(String folderName) {
-        if (folderName.length() > UPLOADED_RESOURCE_NAME_MAX_LENGTH) {
-            throw new InvalidPathException(String.format("Uploaded resource name must be less then %d characters",
-                    UPLOADED_RESOURCE_NAME_MAX_LENGTH));
-        }
-
-    }
-
-    public void validateMoveOperation(Long id, String currentPath, String newPath) {
+    public void validate(Long id, String currentPath, String newPath) {
         validatePathsFormat(currentPath, newPath);
         validatePathsExistence(id, currentPath, newPath);
         validateMoveRules(currentPath, newPath);

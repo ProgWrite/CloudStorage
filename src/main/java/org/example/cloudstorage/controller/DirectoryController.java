@@ -3,7 +3,7 @@ package org.example.cloudstorage.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.example.cloudstorage.dto.FileSystemItemRequestDto;
+import org.example.cloudstorage.dto.fileSystemRequestDto.FileSystemPathRequestDto;
 import org.example.cloudstorage.dto.resourceResponseDto.FolderResponseDto;
 import org.example.cloudstorage.dto.resourceResponseDto.ResourceResponseDto;
 import org.example.cloudstorage.service.DirectoryService;
@@ -30,7 +30,7 @@ public class DirectoryController {
 
 
     @GetMapping("/directory")
-    public ResponseEntity<?> getDirectory(@Valid FileSystemItemRequestDto fileSystemDto,
+    public ResponseEntity<?> getDirectory(@Valid FileSystemPathRequestDto fileSystemDto,
                                           @AuthenticationPrincipal UserDetails userDetails) {
 
         Long id = userService.getId(userDetails.getUsername());
@@ -39,7 +39,7 @@ public class DirectoryController {
     }
 
     @PostMapping("/directory")
-    public ResponseEntity<FolderResponseDto> createDirectory(@Valid FileSystemItemRequestDto fileSystemDto,
+    public ResponseEntity<FolderResponseDto> createDirectory(@Valid FileSystemPathRequestDto fileSystemDto,
                                                              @AuthenticationPrincipal UserDetails userDetails) {
 
         Long id = userService.getId(userDetails.getUsername());

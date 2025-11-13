@@ -1,6 +1,6 @@
 package org.example.cloudstorage;
 
-import org.example.cloudstorage.dto.UserRegistrationRequestDto;
+import org.example.cloudstorage.dto.userDto.UserRegistrationRequestDto;
 import org.example.cloudstorage.dto.resourceResponseDto.ResourceResponseDto;
 import org.example.cloudstorage.exception.InvalidPathException;
 import org.example.cloudstorage.exception.ResourceExistsException;
@@ -584,7 +584,6 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
     private Long createSecondTestUserAndGetId() {
         UserRegistrationRequestDto user = new UserRegistrationRequestDto(
                 "TestUser2",
-                "password",
                 "password"
         );
         userService.create(user);

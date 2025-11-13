@@ -1,4 +1,4 @@
-package org.example.cloudstorage.dto;
+package org.example.cloudstorage.dto.fileSystemRequestDto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;

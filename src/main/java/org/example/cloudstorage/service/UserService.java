@@ -2,8 +2,8 @@ package org.example.cloudstorage.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.cloudstorage.dto.UserRegistrationRequestDto;
-import org.example.cloudstorage.dto.UserResponseDto;
+import org.example.cloudstorage.dto.userDto.UserRegistrationRequestDto;
+import org.example.cloudstorage.dto.userDto.UserResponseDto;
 import org.example.cloudstorage.exception.UserExistsException;
 import org.example.cloudstorage.mapper.UserMapper;
 import org.example.cloudstorage.model.User;
@@ -15,8 +15,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -37,13 +35,14 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
-    public UserResponseDto create(UserRegistrationRequestDto userRegistrationRequestDto) {
-        String username = userRegistrationRequestDto.getUsername();
+    public UserResponseDto create(UserRegistrationRequestDto userDto) {
+        String username = userDto.getUsername();
+
         if (userRepository.findByUsername(username).isPresent()) {
             throw new UserExistsException("Username already exists");
         }
 
-        User user = UserMapper.INSTANCE.toEntity(userRegistrationRequestDto);
+        User user = UserMapper.INSTANCE.toEntity(userDto);
         String encodedPassword = passwordEncoder.encode(user.getPassword());
         user.setPassword(encodedPassword);
         User savedUser = userRepository.save(user);

@@ -1,7 +1,10 @@
-package org.example.cloudstorage.dto;
+package org.example.cloudstorage.dto.userDto;
 
 import jakarta.validation.constraints.NotBlank;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Setter

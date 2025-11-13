@@ -2,8 +2,8 @@ package org.example.cloudstorage;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
-import org.example.cloudstorage.dto.UserRegistrationRequestDto;
-import org.example.cloudstorage.dto.UserResponseDto;
+import org.example.cloudstorage.dto.userDto.UserRegistrationRequestDto;
+import org.example.cloudstorage.dto.userDto.UserResponseDto;
 import org.example.cloudstorage.exception.UserExistsException;
 import org.example.cloudstorage.service.UserService;
 import org.junit.jupiter.api.Test;
@@ -27,7 +27,7 @@ public class UserServiceIT extends AbstractIntegrationTest {
 
     @Test
     void shouldCreateUser() {
-        UserRegistrationRequestDto user = new UserRegistrationRequestDto("Dimka", "password", "password");
+        UserRegistrationRequestDto user = new UserRegistrationRequestDto("Dimka", "password");
         Set<ConstraintViolation<UserRegistrationRequestDto>> violations = validator.validate(user);
 
         assertTrue(violations.isEmpty());
@@ -38,10 +38,10 @@ public class UserServiceIT extends AbstractIntegrationTest {
 
     @Test
     void ShouldThrowUserExistsException() {
-        UserRegistrationRequestDto firstUser = new UserRegistrationRequestDto("Dima", "pass", "pass");
+        UserRegistrationRequestDto firstUser = new UserRegistrationRequestDto("Dima", "pass");
         userService.create(firstUser);
 
-        UserRegistrationRequestDto secondUser = new UserRegistrationRequestDto("Dima", "pass1", "pass1");
+        UserRegistrationRequestDto secondUser = new UserRegistrationRequestDto("Dima", "pass1");
 
         assertThrows(UserExistsException.class, () -> {
             userService.create(secondUser);
@@ -50,7 +50,7 @@ public class UserServiceIT extends AbstractIntegrationTest {
 
     @Test
     void shouldFailValidationWhenUsernameIsTooShort() {
-        UserRegistrationRequestDto user = new UserRegistrationRequestDto("Dima", "password", "password");
+        UserRegistrationRequestDto user = new UserRegistrationRequestDto("Dima", "password");
 
         Set<ConstraintViolation<UserRegistrationRequestDto>> violations = validator.validate(user);
         ConstraintViolation<UserRegistrationRequestDto> violation = violations.iterator().next();
@@ -62,30 +62,17 @@ public class UserServiceIT extends AbstractIntegrationTest {
     void shouldFailValidationWhenPasswordIsTooLong() {
         UserRegistrationRequestDto user = new UserRegistrationRequestDto(
                 "Dimka",
-                "A".repeat(TOO_LONG_PASSWORD_SIZE),
                 "A".repeat(TOO_LONG_PASSWORD_SIZE));
-
         Set<ConstraintViolation<UserRegistrationRequestDto>> violations = validator.validate(user);
         ConstraintViolation<UserRegistrationRequestDto> violation = violations.iterator().next();
 
         assertEquals("The password must be between 5 and 20 characters long", violation.getMessage());
     }
 
-//    @Test
-//    void shouldFailValidationWhenPasswordDoesNotMatch(){
-//        UserRegistrationRequestDto user = new UserRegistrationRequestDto(
-//                "Dimka","password", "password2");
-//
-//        Set<ConstraintViolation<UserRegistrationRequestDto>> violations = validator.validate(user);
-//        ConstraintViolation<UserRegistrationRequestDto> violation = violations.iterator().next();
-//
-//        assertEquals("The passwords don't match", violation.getMessage());
-//    }
-
     @Test
     void shouldLoadUserByUsername() {
         UserRegistrationRequestDto user = new UserRegistrationRequestDto(
-                "Dimka", "password", "password");
+                "Dimka", "password");
         userService.create(user);
 
         UserDetails result = userService.loadUserByUsername(user.getUsername());
@@ -97,7 +84,7 @@ public class UserServiceIT extends AbstractIntegrationTest {
     @Test
     void shouldThrowBadCredentialsException() {
         UserRegistrationRequestDto user = new UserRegistrationRequestDto(
-                "Dimka", "password", "password");
+                "Dimka", "password");
         userService.create(user);
 
         assertThrows(BadCredentialsException.class, () -> {
@@ -108,7 +95,7 @@ public class UserServiceIT extends AbstractIntegrationTest {
 
     @Test
     void passwordShouldBeEncoded() {
-        UserRegistrationRequestDto user = new UserRegistrationRequestDto("Dimka", "password", "password");
+        UserRegistrationRequestDto user = new UserRegistrationRequestDto("Dimka", "password");
         userService.create(user);
 
         UserDetails result = userService.loadUserByUsername(user.getUsername());

@@ -5,7 +5,7 @@ import io.minio.StatObjectResponse;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.compress.utils.IOUtils;
-import org.example.cloudstorage.dto.ResourceType;
+import org.example.cloudstorage.model.ResourceType;
 import org.example.cloudstorage.dto.resourceResponseDto.FileResponseDto;
 import org.example.cloudstorage.dto.resourceResponseDto.FolderResponseDto;
 import org.example.cloudstorage.dto.resourceResponseDto.ResourceResponseDto;
@@ -13,8 +13,8 @@ import org.example.cloudstorage.exception.FileDownloadException;
 import org.example.cloudstorage.exception.InvalidPathException;
 import org.example.cloudstorage.exception.ResourceExistsException;
 import org.example.cloudstorage.exception.ResourceNotFoundException;
-import org.example.cloudstorage.mapper.FileSystemItemMapper;
-import org.example.cloudstorage.validation.ValidationUtils;
+import org.example.cloudstorage.mapper.FileSystemMapper;
+import org.example.cloudstorage.validation.MoveOperationValidator;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
@@ -29,8 +29,8 @@ import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static org.example.cloudstorage.validation.ValidationUtils.validateResourceNameForUpload;
 import static utils.PathUtils.*;
+import static utils.ValidationUtils.validateResourceNameForUpload;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +38,7 @@ public class ResourceService {
 
     private final MinioClientService minioClientService;
     private final DirectoryService directoryService;
-    private final ValidationUtils validationUtils;
+    private final MoveOperationValidator moveOperationValidator;
     private static final int BUFFER_SIZE_1KB = 1024;
     private static final int START_OF_BUFFER = 0;
     private static final int END_OF_INPUT_STREAM = -1;
@@ -53,7 +53,7 @@ public class ResourceService {
 
         if (minioClientService.isPathExists(id, parentPath)) {
             return minioClientService.statObject(id, path)
-                    .map(object -> FileSystemItemMapper.INSTANCE.statObjectToDto(object, id))
+                    .map(object -> FileSystemMapper.INSTANCE.statObjectToDto(object, id))
                     .orElseThrow(() -> new ResourceNotFoundException("Resource not found"));
         }
 
@@ -66,7 +66,6 @@ public class ResourceService {
         if (file.getOriginalFilename() == null || file.getOriginalFilename().isEmpty()) {
             throw new InvalidPathException("File list cannot be empty");
         }
-
         if (!isPathValid(path)) {
             throw new InvalidPathException("Invalid path");
         }
@@ -76,11 +75,9 @@ public class ResourceService {
         if (isResourceExists(id, path, files)) {
             throw new ResourceExistsException("Resource with this name already exists in this directory");
         }
-
         if (!minioClientService.isPathExists(id, path) && path.endsWith("/")) {
             return getUploadedFiles(files, id, path);
         }
-
         return getUploadedFiles(files, id, path);
     }
 
@@ -120,9 +117,8 @@ public class ResourceService {
         return downloadFile(id, path);
     }
 
-    // TODO подумай куда вынести всю валидацию (её здесь очень много)
     public ResourceResponseDto move(Long id, String currentPath, String newPath) {
-        validationUtils.validateMoveOperation(id, currentPath, newPath);
+        moveOperationValidator.validate(id, currentPath, newPath);
         return newPath.endsWith("/") ?
                 moveFolder(currentPath, newPath, id) :
                 moveFile(currentPath, newPath, id);
@@ -217,7 +213,6 @@ public class ResourceService {
         return uniqueFolders;
     }
 
-    //TODO подумай как избавиться от дублирования кода здесь (с методом выше)
     private Set<String> getUniqueFolders(List<Item> items, String newPath) {
         Set<String> uniqueFolders = new HashSet<>();
 
@@ -281,7 +276,7 @@ public class ResourceService {
     }
 
     private FileResponseDto moveFile(String currentPath, String newPath, Long id) {
-        String folderName = extractResourceName(newPath, false);
+        String fileName = extractResourceName(newPath, false);
         long size = minioClientService.statObject(id, currentPath)
                 .map(StatObjectResponse::size)
                 .orElseThrow(() -> new ResourceNotFoundException("Resource not found"));
@@ -291,7 +286,7 @@ public class ResourceService {
 
         return new FileResponseDto(
                 buildParentPath(newPath),
-                folderName,
+                fileName,
                 size,
                 ResourceType.FILE
         );
@@ -332,7 +327,6 @@ public class ResourceService {
 
     }
 
-    //TODO подумай о дублировании названия метода (похож с прошлым)
     public boolean isResourceExists(Long id, String path, MultipartFile[] files) {
         if (files == null || files.length == 0 || files[0] == null) {
             return false;

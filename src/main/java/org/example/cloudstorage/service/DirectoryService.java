@@ -3,14 +3,14 @@ package org.example.cloudstorage.service;
 import io.minio.Result;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
-import org.example.cloudstorage.dto.ResourceType;
+import org.example.cloudstorage.mapper.FileSystemMapper;
+import org.example.cloudstorage.model.ResourceType;
 import org.example.cloudstorage.dto.resourceResponseDto.FolderResponseDto;
 import org.example.cloudstorage.dto.resourceResponseDto.ResourceResponseDto;
 import org.example.cloudstorage.exception.InvalidPathException;
 import org.example.cloudstorage.exception.MinioOperationException;
 import org.example.cloudstorage.exception.ResourceExistsException;
 import org.example.cloudstorage.exception.ResourceNotFoundException;
-import org.example.cloudstorage.mapper.FileSystemItemMapper;
 import org.springframework.stereotype.Service;
 import utils.TraversalMode;
 
@@ -18,8 +18,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.example.cloudstorage.validation.ValidationUtils.validateResourceName;
+
 import static utils.PathUtils.*;
+import static utils.ValidationUtils.validateResourceName;
 
 
 @Service
@@ -63,7 +64,7 @@ public class DirectoryService {
             Iterable<Result<Item>> minioObjects = minioClientService.getListObjects(id, path, traversalMode);
             List<Item> items = extractAndFilterItemsFromMinio(minioObjects, id, path);
             return items.stream()
-                    .map(item -> FileSystemItemMapper.INSTANCE.itemToDto(item, path))
+                    .map(item -> FileSystemMapper.INSTANCE.itemToDto(item, path))
                     .collect(Collectors.toList());
         }
 

@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.cloudstorage.dto.ErrorResponseDto;
-import org.example.cloudstorage.dto.UserResponseDto;
+import org.example.cloudstorage.dto.userDto.UserResponseDto;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;

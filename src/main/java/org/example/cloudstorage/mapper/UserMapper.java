@@ -1,7 +1,7 @@
 package org.example.cloudstorage.mapper;
 
-import org.example.cloudstorage.dto.UserRegistrationRequestDto;
-import org.example.cloudstorage.dto.UserResponseDto;
+import org.example.cloudstorage.dto.userDto.UserRegistrationRequestDto;
+import org.example.cloudstorage.dto.userDto.UserResponseDto;
 import org.example.cloudstorage.model.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

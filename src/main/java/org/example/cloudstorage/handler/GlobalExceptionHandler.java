@@ -5,10 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.example.cloudstorage.dto.ErrorResponseDto;
-import org.example.cloudstorage.exception.InvalidPathException;
-import org.example.cloudstorage.exception.ResourceExistsException;
-import org.example.cloudstorage.exception.ResourceNotFoundException;
-import org.example.cloudstorage.exception.UserExistsException;
+import org.example.cloudstorage.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -53,11 +50,10 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
 
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponseDto> handleValidationErrors(MethodArgumentNotValidException exception) {
         String errorMessage = buildValidationErrorMessage(exception);
-        log.warn("Validation error: {}", errorMessage);
+        log.warn("MoveOperationValidator error: {}", errorMessage);
         ErrorResponseDto error = new ErrorResponseDto(errorMessage);
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }

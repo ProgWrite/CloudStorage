@@ -14,9 +14,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.cloudstorage.dto.ErrorResponseDto;
-import org.example.cloudstorage.dto.UserAuthorizationRequestDto;
-import org.example.cloudstorage.dto.UserRegistrationRequestDto;
-import org.example.cloudstorage.dto.UserResponseDto;
+import org.example.cloudstorage.dto.userDto.UserAuthorizationRequestDto;
+import org.example.cloudstorage.dto.userDto.UserRegistrationRequestDto;
+import org.example.cloudstorage.dto.userDto.UserResponseDto;
 import org.example.cloudstorage.repository.UserRepository;
 import org.example.cloudstorage.service.DirectoryService;
 import org.example.cloudstorage.service.UserService;
@@ -29,14 +29,11 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Optional;
 
 @Slf4j
 @RequestMapping("/api/auth")
@@ -79,7 +76,7 @@ public class AuthController {
                     )
             ),
             @ApiResponse(
-                    description = "Validation error",
+                    description = "MoveOperationValidator error",
                     responseCode = "400",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
@@ -129,7 +126,7 @@ public class AuthController {
                     )
             ),
             @ApiResponse(
-                    description = "Validation error",
+                    description = "MoveOperationValidator error",
                     responseCode = "400",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
