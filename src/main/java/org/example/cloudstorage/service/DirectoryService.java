@@ -3,9 +3,9 @@ package org.example.cloudstorage.service;
 import io.minio.Result;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
-import org.example.cloudstorage.dto.resourceResponseDto.ResourceResponseDto;
-import org.example.cloudstorage.dto.resourceResponseDto.FolderResponseDto;
 import org.example.cloudstorage.dto.ResourceType;
+import org.example.cloudstorage.dto.resourceResponseDto.FolderResponseDto;
+import org.example.cloudstorage.dto.resourceResponseDto.ResourceResponseDto;
 import org.example.cloudstorage.exception.InvalidPathException;
 import org.example.cloudstorage.exception.MinioOperationException;
 import org.example.cloudstorage.exception.ResourceExistsException;
@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.example.cloudstorage.validation.ValidationUtils.validateResourceName;
 import static utils.PathUtils.*;
 
 
@@ -43,6 +44,7 @@ public class DirectoryService {
         }
 
         String folderName = extractResourceName(path, false);
+        validateResourceName(folderName);
 
         if (isFolderExists(id, folderName, parentPath)) {
             throw new ResourceExistsException("Folder with this name already exists.");

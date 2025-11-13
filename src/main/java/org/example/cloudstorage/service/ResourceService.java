@@ -14,6 +14,7 @@ import org.example.cloudstorage.exception.InvalidPathException;
 import org.example.cloudstorage.exception.ResourceExistsException;
 import org.example.cloudstorage.exception.ResourceNotFoundException;
 import org.example.cloudstorage.mapper.FileSystemItemMapper;
+import org.example.cloudstorage.validation.ValidationUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
@@ -28,6 +29,7 @@ import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static org.example.cloudstorage.validation.ValidationUtils.validateResourceNameForUpload;
 import static utils.PathUtils.*;
 
 @Service
@@ -36,6 +38,7 @@ public class ResourceService {
 
     private final MinioClientService minioClientService;
     private final DirectoryService directoryService;
+    private final ValidationUtils validationUtils;
     private static final int BUFFER_SIZE_1KB = 1024;
     private static final int START_OF_BUFFER = 0;
     private static final int END_OF_INPUT_STREAM = -1;
@@ -119,59 +122,7 @@ public class ResourceService {
 
     // TODO подумай куда вынести всю валидацию (её здесь очень много)
     public ResourceResponseDto move(Long id, String currentPath, String newPath) {
-        if (!isPathValidToMove(currentPath)) {
-            throw new InvalidPathException("Invalid current path");
-        }
-
-        if (!isPathValidToMove(newPath)) {
-            throw new InvalidPathException("Invalid new path");
-        }
-
-        String parentCurrentPath = buildParentPath(currentPath);
-        String parentNewPath = buildParentPath(newPath);
-
-        if (!minioClientService.isPathExists(id, parentCurrentPath)) {
-            throw new ResourceNotFoundException("Current path with this name not found");
-        }
-
-        if (!minioClientService.isPathExists(id, parentNewPath)) {
-            throw new ResourceNotFoundException("New path with this name not found");
-        }
-
-        if (!isResourceExists(id, parentCurrentPath, currentPath)) {
-            throw new ResourceNotFoundException("Resource with this name not found");
-        }
-
-        if (!currentPath.endsWith("/")) {
-            if (newPath.endsWith("/")) {
-                throw new InvalidPathException("New path should end with resource name");
-            }
-        }
-
-        if (currentPath.endsWith("/")) {
-            if (!newPath.endsWith("/")) {
-                throw new InvalidPathException("New path for folders should end with /");
-            }
-        }
-
-        if (!parentCurrentPath.equals(parentNewPath)) {
-            String currentResourceName = extractResourceName(currentPath, false);
-            String newResourceName = extractResourceName(newPath, false);
-
-            if (!currentResourceName.equals(newResourceName)) {
-                throw new InvalidPathException("Cannot change resource name during move operation");
-            }
-        }
-
-        if (newPath.startsWith(currentPath) && newPath.length() > currentPath.length()
-                && currentPath.endsWith("/") && newPath.endsWith("/")) {
-            throw new InvalidPathException("Cannot move folder into its own subfolder");
-        }
-
-        if (isResourceExists(id, parentNewPath, newPath)) {
-            throw new ResourceExistsException("Resource with this name already exists");
-        }
-
+        validationUtils.validateMoveOperation(id, currentPath, newPath);
         return newPath.endsWith("/") ?
                 moveFolder(currentPath, newPath, id) :
                 moveFile(currentPath, newPath, id);
@@ -211,13 +162,15 @@ public class ResourceService {
         Set<String> uniqueFolders = getUniqueFolders(files, path, id);
 
         if (!uniqueFolders.isEmpty()) {
-            for (String folderName : uniqueFolders) {
-                minioClientService.putDirectory(id, folderName);
+            for (String folderPath : uniqueFolders) {
+                validateResourceNameForUpload(extractResourceName(folderPath, false));
+                minioClientService.putDirectory(id, folderPath);
             }
         }
 
         for (MultipartFile file : files) {
             String fileName = file.getOriginalFilename();
+            validateResourceNameForUpload(fileName);
             minioClientService.putFile(id, path, file);
             uploadedFiles.add(new FileResponseDto(
                             path,
@@ -379,19 +332,6 @@ public class ResourceService {
 
     }
 
-    public boolean isResourceExists(Long id, String parentPath, String path) {
-        List<ResourceResponseDto> currentDirectory = directoryService.getDirectory(id, parentPath, TraversalMode.NON_RECURSIVE);
-        boolean isTrailingSlash = checkTrailingSlash(parentPath, path);
-        String resourceName = extractResourceName(path, isTrailingSlash);
-
-        for (ResourceResponseDto dto : currentDirectory) {
-            if (dto.name().equals(resourceName)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     //TODO подумай о дублировании названия метода (похож с прошлым)
     public boolean isResourceExists(Long id, String path, MultipartFile[] files) {
         if (files == null || files.length == 0 || files[0] == null) {
@@ -412,17 +352,6 @@ public class ResourceService {
             if (resourceName.equals(folderName)) {
                 return true;
             }
-        }
-        return false;
-    }
-
-
-    private boolean checkTrailingSlash(String parentPath, String path) {
-        if (path.endsWith("/")) {
-            return true;
-        }
-        if (parentPath.equals("") && path.endsWith("/")) {
-            return true;
         }
         return false;
     }

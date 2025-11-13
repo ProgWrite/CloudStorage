@@ -82,7 +82,6 @@ public class MinioClientService {
         }
     }
 
-    //TODO почитать о PathReversal.
     public Iterable<Result<Item>> getListObjects(Long id, String path, TraversalMode traversalMode) {
         boolean searchType = (TraversalMode.RECURSIVE == traversalMode);
 
