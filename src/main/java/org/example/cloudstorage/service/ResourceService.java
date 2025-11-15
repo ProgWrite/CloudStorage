@@ -18,7 +18,7 @@ import org.example.cloudstorage.validation.MoveOperationValidator;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
-import utils.TraversalMode;
+import org.example.cloudstorage.model.TraversalMode;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,8 +29,8 @@ import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static utils.PathUtils.*;
-import static utils.ValidationUtils.validateResourceNameForUpload;
+import static org.example.cloudstorage.utils.PathUtils.*;
+import static org.example.cloudstorage.validation.PathAndNameValidator.*;
 
 @Service
 @RequiredArgsConstructor

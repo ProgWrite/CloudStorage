@@ -8,12 +8,13 @@ import org.example.cloudstorage.exception.ResourceNotFoundException;
 import org.example.cloudstorage.service.DirectoryService;
 import org.example.cloudstorage.service.MinioClientService;
 import org.springframework.stereotype.Component;
-import utils.TraversalMode;
+import org.example.cloudstorage.model.TraversalMode;
 
 import java.util.List;
 
-import static utils.PathUtils.*;
-import static utils.ValidationUtils.validateResourceName;
+import static org.example.cloudstorage.utils.PathUtils.*;
+import static org.example.cloudstorage.validation.PathAndNameValidator.isPathValidToMove;
+import static org.example.cloudstorage.validation.PathAndNameValidator.validateResourceName;
 
 @RequiredArgsConstructor
 @Component

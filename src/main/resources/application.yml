@@ -4,9 +4,10 @@ spring:
       on-profile: default
 
   servlet:
-   multipart:
-     max-file-size: 500MB
-     max-request-size: 500MB
+    multipart:
+      max-file-size: 500MB
+      max-request-size: 500MB
+
 
   datasource:
     url: jdbc:postgresql://localhost:5433/${DB_NAME}
@@ -30,6 +31,9 @@ spring:
 
 server:
   port: 8080
+  tomcat:
+    relaxed-query-chars: '|,\,{,},[,],^,`,<,>'
+    relaxed-path-chars: '|,{,},[,],^,`,<,>'
 
 logging:
   level:
@@ -49,6 +53,12 @@ spring:
   config:
     activate:
       on-profile: docker
+
+  servlet:
+    multipart:
+      max-file-size: 500MB
+      max-request-size: 500MB
+
   datasource:
     url: jdbc:postgresql://db:5432/${DB_NAME:postgres}
     username: ${DB_USER:postgres}
@@ -73,6 +83,9 @@ spring:
 
 server:
   port: 8080
+  tomcat:
+    relaxed-query-chars: '|,\,{,},[,],^,`,<,>'
+    relaxed-path-chars: '|,{,},[,],^,`,<,>'
 
 minio:
   url: ${MINIO_URL}

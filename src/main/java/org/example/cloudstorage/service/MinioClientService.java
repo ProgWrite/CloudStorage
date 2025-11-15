@@ -8,7 +8,7 @@ import org.example.cloudstorage.exception.MinioOperationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import utils.TraversalMode;
+import org.example.cloudstorage.model.TraversalMode;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -16,7 +16,7 @@ import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.util.Optional;
 
-import static utils.PathUtils.buildRootPath;
+import static org.example.cloudstorage.utils.PathUtils.buildRootPath;
 
 @Service
 @RequiredArgsConstructor

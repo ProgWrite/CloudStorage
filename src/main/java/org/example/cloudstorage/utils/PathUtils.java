@@ -1,4 +1,4 @@
-package utils;
+package org.example.cloudstorage.utils;
 
 import io.minio.messages.Item;
 import org.example.cloudstorage.exception.InvalidPathException;
@@ -53,55 +53,6 @@ public class PathUtils {
         return path.replace("user-" + id + "-files/", "");
     }
 
-    public static boolean isPathValid(String path) {
-        if (path == null) {
-            throw new InvalidPathException("Path cannot be null");
-        }
-
-        if (path.startsWith("/")) {
-            return false;
-        }
-
-        if (hasMultipleSlashes(path)) {
-            return false;
-        }
-
-        if (path.equals("") || path.endsWith("/")) {
-            return true;
-        }
-
-        return false;
-    }
-
-    public static boolean isPathValidToDeleteOrDownload(String path) {
-        if (path == null) {
-            throw new InvalidPathException("Path cannot be null");
-        }
-
-        if (path.equals("") || path.startsWith("/")) {
-            return false;
-        }
-        if (hasMultipleSlashes(path)) {
-            return false;
-        }
-        return true;
-    }
-
-    public static boolean isPathValidToMove(String path) {
-        if (path == null) {
-            throw new InvalidPathException("Path cannot be null");
-        }
-
-        if (path.startsWith("/")) {
-            return false;
-        }
-        if (hasMultipleSlashes(path)) {
-            return false;
-        }
-
-        return true;
-    }
-
     public static String buildRelativeResourcePath(Item item, String currentPath, Long id) {
         if (currentPath == null) {
             throw new InvalidPathException("Path cannot be null");
@@ -134,14 +85,6 @@ public class PathUtils {
         Path currentDirectory = Paths.get(pathWithoutRoot);
         String currentPath = parentDirectory.relativize(currentDirectory).toString().replace("\\", "/");
         return currentPath;
-    }
-
-    private static boolean hasMultipleSlashes(String path) {
-        if (path.equals("")) {
-            return false;
-        }
-
-        return path.contains("//");
     }
 
 }

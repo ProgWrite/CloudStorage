@@ -9,9 +9,9 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 import org.mapstruct.factory.Mappers;
-import utils.PathUtils;
+import org.example.cloudstorage.utils.PathUtils;
 
-import static utils.PathUtils.deleteRootPath;
+import static org.example.cloudstorage.utils.PathUtils.deleteRootPath;
 
 
 @Mapper

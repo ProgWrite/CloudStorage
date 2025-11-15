@@ -8,7 +8,7 @@ import org.example.cloudstorage.exception.ResourceExistsException;
 import org.example.cloudstorage.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import utils.TraversalMode;
+import org.example.cloudstorage.model.TraversalMode;
 
 import java.util.List;
 

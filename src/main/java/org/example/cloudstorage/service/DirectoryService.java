@@ -12,15 +12,16 @@ import org.example.cloudstorage.exception.MinioOperationException;
 import org.example.cloudstorage.exception.ResourceExistsException;
 import org.example.cloudstorage.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
-import utils.TraversalMode;
+import org.example.cloudstorage.model.TraversalMode;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 
-import static utils.PathUtils.*;
-import static utils.ValidationUtils.validateResourceName;
+import static org.example.cloudstorage.utils.PathUtils.*;
+import static org.example.cloudstorage.validation.PathAndNameValidator.isPathValid;
+import static org.example.cloudstorage.validation.PathAndNameValidator.validateResourceName;
 
 
 @Service

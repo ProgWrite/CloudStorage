@@ -28,7 +28,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import static utils.PathUtils.extractResourceName;
+import static org.example.cloudstorage.utils.PathUtils.extractResourceName;
 
 
 @RestController
