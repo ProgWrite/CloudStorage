@@ -3,6 +3,7 @@ package org.example.cloudstorage.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.cloudstorage.apiDocs.DirectoryApi;
 import org.example.cloudstorage.dto.fileSystemRequestDto.FileSystemPathRequestDto;
 import org.example.cloudstorage.dto.resourceResponseDto.FolderResponseDto;
 import org.example.cloudstorage.dto.resourceResponseDto.ResourceResponseDto;
@@ -23,19 +24,19 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api")
-public class DirectoryController {
+public class DirectoryController implements DirectoryApi {
 
     private final DirectoryService directoryService;
     private final UserService userService;
 
 
     @GetMapping("/directory")
-    public ResponseEntity<?> getDirectory(@Valid FileSystemPathRequestDto fileSystemDto,
+    public ResponseEntity<List<ResourceResponseDto>> getDirectory(@Valid FileSystemPathRequestDto fileSystemDto,
                                           @AuthenticationPrincipal UserDetails userDetails) {
 
         Long id = userService.getId(userDetails.getUsername());
-        List<ResourceResponseDto> folder = directoryService.getDirectory(id, fileSystemDto.path(), TraversalMode.NON_RECURSIVE);
-        return ResponseEntity.ok(folder);
+        List<ResourceResponseDto> resource = directoryService.getDirectory(id, fileSystemDto.path(), TraversalMode.NON_RECURSIVE);
+        return ResponseEntity.ok(resource);
     }
 
     @PostMapping("/directory")

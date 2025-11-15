@@ -2,6 +2,7 @@ package org.example.cloudstorage.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.cloudstorage.apiDocs.ResourceApi;
 import org.example.cloudstorage.dto.fileSystemRequestDto.FileSystemPathRequestDto;
 import org.example.cloudstorage.dto.fileSystemRequestDto.FileSystemMoveRequestDto;
 import org.example.cloudstorage.dto.fileSystemRequestDto.FileSystemSearchRequestDto;
@@ -15,12 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
@@ -34,7 +30,7 @@ import static org.example.cloudstorage.utils.PathUtils.extractResourceName;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/resource")
-public class ResourceController {
+public class ResourceController implements ResourceApi {
 
     private final ResourceService resourceService;
     private final UserService userService;
@@ -47,15 +43,6 @@ public class ResourceController {
         return ResponseEntity.status(HttpStatus.OK).body(resource);
     }
 
-    @PostMapping
-    public ResponseEntity<List<ResourceResponseDto>> upload(@Valid FileSystemPathRequestDto fileSystemDto,
-                                                            @RequestPart("object") MultipartFile[] file,
-                                                            @AuthenticationPrincipal UserDetails userDetails) {
-        Long id = userService.getId(userDetails.getUsername());
-        List<ResourceResponseDto> resources = resourceService.upload(id, fileSystemDto.path(), file);
-        return ResponseEntity.status(HttpStatus.CREATED).body(resources);
-    }
-
     @DeleteMapping
     public ResponseEntity<Void> delete(@AuthenticationPrincipal UserDetails userDetails,
                                        @Valid FileSystemPathRequestDto fileSystemDto) {
@@ -63,6 +50,15 @@ public class ResourceController {
         Long id = userService.getId(userDetails.getUsername());
         resourceService.delete(id, fileSystemDto.path());
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping
+    public ResponseEntity<List<ResourceResponseDto>> upload(@Valid FileSystemPathRequestDto fileSystemDto,
+                                                            @RequestPart("object") MultipartFile[] file,
+                                                            @AuthenticationPrincipal UserDetails userDetails) {
+        Long id = userService.getId(userDetails.getUsername());
+        List<ResourceResponseDto> resources = resourceService.upload(id, fileSystemDto.path(), file);
+        return ResponseEntity.status(HttpStatus.CREATED).body(resources);
     }
 
     @GetMapping("/download")
