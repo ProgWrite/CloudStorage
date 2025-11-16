@@ -3,21 +3,18 @@ package org.example.cloudstorage.mapper;
 import io.minio.StatObjectResponse;
 import io.minio.messages.Item;
 import org.example.cloudstorage.dto.resourceResponseDto.FileResponseDto;
-import org.example.cloudstorage.dto.resourceResponseDto.ResourceResponseDto;
 import org.example.cloudstorage.dto.resourceResponseDto.FolderResponseDto;
+import org.example.cloudstorage.dto.resourceResponseDto.ResourceResponseDto;
+import org.example.cloudstorage.service.StoragePathService;
+import org.example.cloudstorage.utils.PathUtils;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingConstants;
 import org.mapstruct.Named;
-import org.mapstruct.factory.Mappers;
-import org.example.cloudstorage.utils.PathUtils;
-
-import static org.example.cloudstorage.utils.PathUtils.deleteRootPath;
 
 
-@Mapper
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface FileSystemMapper {
-
-    FileSystemMapper INSTANCE = Mappers.getMapper(FileSystemMapper.class);
 
     default ResourceResponseDto itemToDto(Item item, String path) {
         boolean isDirectory = item.objectName().endsWith("/");
@@ -29,10 +26,10 @@ public interface FileSystemMapper {
         }
     }
 
-    default ResourceResponseDto statObjectToDto(StatObjectResponse object, Long userId) {
+    default ResourceResponseDto statObjectToDto(StatObjectResponse object, Long userId, StoragePathService storagePathService) {
         String fullName = object.object();
-        String relativePath = deleteRootPath(fullName, userId);
-        String path = PathUtils.buildParentPath(relativePath);
+        String relativePath = storagePathService.deleteRootPath(fullName, userId);
+        String path = PathUtils.extractParentPath(relativePath);
         String resourceName = PathUtils.extractResourceName(fullName, false);
 
         if (fullName.endsWith("/")) {

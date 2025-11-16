@@ -1,17 +1,17 @@
 package org.example.cloudstorage;
 
-import org.example.cloudstorage.dto.userDto.UserRegistrationRequestDto;
 import org.example.cloudstorage.dto.resourceResponseDto.ResourceResponseDto;
+import org.example.cloudstorage.dto.userDto.UserRegistrationRequestDto;
 import org.example.cloudstorage.exception.InvalidPathException;
 import org.example.cloudstorage.exception.ResourceExistsException;
 import org.example.cloudstorage.exception.ResourceNotFoundException;
+import org.example.cloudstorage.model.TraversalMode;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
-import org.example.cloudstorage.model.TraversalMode;
 
 import java.util.List;
 
@@ -167,7 +167,7 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
 
             resourceService.delete(userId, resourcePath);
 
-            assertThrows(InvalidPathException.class, () -> {
+            assertThrows(ResourceNotFoundException.class, () -> {
                 resourceService.getResourceInfo(userId, resourcePath);
             });
         }

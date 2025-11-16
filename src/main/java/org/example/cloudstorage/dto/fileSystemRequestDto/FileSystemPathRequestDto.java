@@ -2,7 +2,6 @@ package org.example.cloudstorage.dto.fileSystemRequestDto;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.constraints.Pattern;
-import org.springframework.web.bind.annotation.RequestParam;
 
 
 public record FileSystemPathRequestDto(

@@ -15,10 +15,10 @@ public class MinioConfiguration {
             @Value("${MINIO_USER}")
             String username,
             @Value("${MINIO_PASSWORD}")
-            String password){
+            String password) {
         return MinioClient.builder()
                 .endpoint(url)
-                .credentials(username,password)
+                .credentials(username, password)
                 .build();
     }
 }

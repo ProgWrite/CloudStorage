@@ -5,7 +5,6 @@ import jakarta.validation.Validator;
 import org.example.cloudstorage.dto.userDto.UserRegistrationRequestDto;
 import org.example.cloudstorage.dto.userDto.UserResponseDto;
 import org.example.cloudstorage.exception.UserExistsException;
-import org.example.cloudstorage.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -16,9 +15,6 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class UserServiceIT extends AbstractIntegrationTest {
-
-    @Autowired
-    private UserService userService;
 
     @Autowired
     private Validator validator;

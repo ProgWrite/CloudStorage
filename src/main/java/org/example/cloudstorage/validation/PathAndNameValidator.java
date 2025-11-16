@@ -9,7 +9,7 @@ public class PathAndNameValidator {
 
 
     public static void validateResourceName(String folderName) {
-        if(folderName == null){
+        if (folderName == null) {
             throw new InvalidPathException("Folder name cannot be null");
         }
 
@@ -21,7 +21,7 @@ public class PathAndNameValidator {
     }
 
     public static void validateResourceNameForUpload(String folderName) {
-        if(folderName == null){
+        if (folderName == null) {
             throw new InvalidPathException("Folder name cannot be null");
         }
 
@@ -31,7 +31,6 @@ public class PathAndNameValidator {
         }
 
     }
-
 
     public static boolean isPathValid(String path) {
         if (path == null) {
@@ -46,11 +45,7 @@ public class PathAndNameValidator {
             return false;
         }
 
-        if (path.equals("") || path.endsWith("/")) {
-            return true;
-        }
-
-        return false;
+        return path.isEmpty() || path.endsWith("/");
     }
 
     public static boolean isPathValidToDeleteOrDownload(String path) {
@@ -58,13 +53,10 @@ public class PathAndNameValidator {
             throw new InvalidPathException("Path cannot be null");
         }
 
-        if (path.equals("") || path.startsWith("/")) {
+        if (path.isEmpty() || path.startsWith("/")) {
             return false;
         }
-        if (hasMultipleSlashes(path)) {
-            return false;
-        }
-        return true;
+        return !hasMultipleSlashes(path);
     }
 
     public static boolean isPathValidToMove(String path) {
@@ -75,15 +67,11 @@ public class PathAndNameValidator {
         if (path.startsWith("/")) {
             return false;
         }
-        if (hasMultipleSlashes(path)) {
-            return false;
-        }
-
-        return true;
+        return !hasMultipleSlashes(path);
     }
 
     private static boolean hasMultipleSlashes(String path) {
-        if (path.equals("")) {
+        if (path.isEmpty()) {
             return false;
         }
 

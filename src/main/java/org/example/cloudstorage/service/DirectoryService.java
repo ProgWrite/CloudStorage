@@ -3,23 +3,23 @@ package org.example.cloudstorage.service;
 import io.minio.Result;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
-import org.example.cloudstorage.mapper.FileSystemMapper;
-import org.example.cloudstorage.model.ResourceType;
 import org.example.cloudstorage.dto.resourceResponseDto.FolderResponseDto;
 import org.example.cloudstorage.dto.resourceResponseDto.ResourceResponseDto;
 import org.example.cloudstorage.exception.InvalidPathException;
 import org.example.cloudstorage.exception.MinioOperationException;
 import org.example.cloudstorage.exception.ResourceExistsException;
 import org.example.cloudstorage.exception.ResourceNotFoundException;
-import org.springframework.stereotype.Service;
+import org.example.cloudstorage.mapper.FileSystemMapper;
+import org.example.cloudstorage.model.ResourceType;
 import org.example.cloudstorage.model.TraversalMode;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
-import static org.example.cloudstorage.utils.PathUtils.*;
+import static org.example.cloudstorage.utils.PathUtils.extractParentPath;
+import static org.example.cloudstorage.utils.PathUtils.extractResourceName;
 import static org.example.cloudstorage.validation.PathAndNameValidator.isPathValid;
 import static org.example.cloudstorage.validation.PathAndNameValidator.validateResourceName;
 
@@ -29,6 +29,8 @@ import static org.example.cloudstorage.validation.PathAndNameValidator.validateR
 public class DirectoryService {
 
     private final MinioClientService minioClientService;
+    private final StoragePathService storagePathService;
+    private final FileSystemMapper fileSystemMapper;
 
     public void createRootDirectory(Long id) {
         minioClientService.putRootDirectory(id);
@@ -39,7 +41,7 @@ public class DirectoryService {
             throw new InvalidPathException("Invalid path.");
         }
 
-        String parentPath = buildParentPath(path);
+        String parentPath = extractParentPath(path);
 
         if (!minioClientService.isPathExists(id, parentPath)) {
             throw new ResourceNotFoundException("Parent path not found.");
@@ -65,7 +67,7 @@ public class DirectoryService {
             Iterable<Result<Item>> minioObjects = minioClientService.getListObjects(id, path, traversalMode);
             List<Item> items = extractAndFilterItemsFromMinio(minioObjects, id, path);
             return items.stream()
-                    .map(item -> FileSystemMapper.INSTANCE.itemToDto(item, path))
+                    .map(item -> fileSystemMapper.itemToDto(item, path))
                     .collect(Collectors.toList());
         }
 
@@ -89,13 +91,13 @@ public class DirectoryService {
         try {
             for (Result<Item> minioObject : minioObjects) {
                 Item item = minioObject.get();
-                if (item.objectName().equals(buildRootPath(id) + path)) {
+                if (item.objectName().equals(storagePathService.buildRootPath(id) + path)) {
                     continue;
                 }
                 successfulItems.add(item);
             }
         } catch (Exception e) {
-            throw new MinioOperationException("Failed to extract items from MinIO for user with id " + id + "and path " + path);
+            throw new MinioOperationException("Failed to extract items from MinIO for user with id " + id + "and path " + path, e);
         }
         return successfulItems;
     }

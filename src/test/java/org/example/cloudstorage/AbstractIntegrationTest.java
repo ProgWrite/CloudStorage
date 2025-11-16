@@ -17,11 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-
-import java.time.Duration;
 
 @Testcontainers
 @ActiveProfiles("test")
@@ -29,26 +25,27 @@ import java.time.Duration;
 @Transactional
 public abstract class AbstractIntegrationTest {
 
-
     private static final String MINIO_USERNAME = "minioadmin";
     private static final String MINIO_PASSWORD = "minioadmin";
     private static final String MINIO_BUCKET_NAME = "test-bucket";
 
-    @Container
-    protected static final PostgreSQLContainer<?> POSTGRESQL_CONTAINER =
-            new PostgreSQLContainer<>("postgres:latest")
-                    .waitingFor(Wait.forLogMessage(".*database system is ready to accept connections.*\\n", 2))
-                    .withStartupTimeout(Duration.ofMinutes(2));
+    private static final PostgreSQLContainer<?> POSTGRESQL_CONTAINER;
+    private static final GenericContainer<?> MINIO_CONTAINER;
 
-    @Container
-    protected static final GenericContainer<?> MINIO_CONTAINER =
-            new GenericContainer<>("minio/minio:latest")
-                    .withExposedPorts(9000)
-                    .withEnv("MINIO_ROOT_USER", MINIO_USERNAME)
-                    .withEnv("MINIO_ROOT_PASSWORD", MINIO_PASSWORD)
-                    .withCommand("server /data")
-                    .withAccessToHost(true)
-                    .waitingFor(Wait.forHttp("/minio/health/ready").forPort(9000));
+    static {
+        POSTGRESQL_CONTAINER = new PostgreSQLContainer<>("postgres:latest")
+                .withDatabaseName("testdb")
+                .withUsername("test")
+                .withPassword("test");
+        POSTGRESQL_CONTAINER.start();
+
+        MINIO_CONTAINER = new GenericContainer<>("minio/minio:latest")
+                .withExposedPorts(9000)
+                .withEnv("MINIO_ROOT_USER", MINIO_USERNAME)
+                .withEnv("MINIO_ROOT_PASSWORD", MINIO_PASSWORD)
+                .withCommand("server /data");
+        MINIO_CONTAINER.start();
+    }
 
     @Autowired
     protected UserService userService;
@@ -127,10 +124,6 @@ public abstract class AbstractIntegrationTest {
                 )
         };
     }
-
-
-
-
 
 
 }

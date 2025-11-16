@@ -10,8 +10,6 @@ import org.example.cloudstorage.apiDocs.AuthApi;
 import org.example.cloudstorage.dto.userDto.UserAuthorizationRequestDto;
 import org.example.cloudstorage.dto.userDto.UserRegistrationRequestDto;
 import org.example.cloudstorage.dto.userDto.UserResponseDto;
-import org.example.cloudstorage.repository.UserRepository;
-import org.example.cloudstorage.service.DirectoryService;
 import org.example.cloudstorage.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,9 +34,6 @@ public class AuthController implements AuthApi {
     private final SecurityContextRepository securityContextRepository;
     private final AuthenticationManager authenticationManager;
     private final UserService userService;
-    private final DirectoryService directoryService;
-    private final UserRepository userRepository;
-
 
     @PostMapping("/sign-in")
     public ResponseEntity<UserResponseDto> signIn(@RequestBody UserAuthorizationRequestDto user, HttpServletRequest request,
@@ -53,11 +48,11 @@ public class AuthController implements AuthApi {
     @PostMapping("/sign-up")
     public ResponseEntity<UserResponseDto> signUp(@Valid @RequestBody UserRegistrationRequestDto user, HttpServletRequest request,
                                                   HttpServletResponse response) {
+
         log.info("Attempting registration for user: {}", user.getUsername());
         UserResponseDto userDto = userService.create(user);
         authenticateUser(user.getUsername(), user.getPassword(), request, response);
-        Long id = userRepository.findIdByUsername(user.getUsername());
-        directoryService.createRootDirectory(id);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(userDto);
     }
 

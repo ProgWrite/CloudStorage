@@ -5,14 +5,15 @@ import org.example.cloudstorage.dto.resourceResponseDto.ResourceResponseDto;
 import org.example.cloudstorage.exception.InvalidPathException;
 import org.example.cloudstorage.exception.ResourceExistsException;
 import org.example.cloudstorage.exception.ResourceNotFoundException;
+import org.example.cloudstorage.model.TraversalMode;
 import org.example.cloudstorage.service.DirectoryService;
 import org.example.cloudstorage.service.MinioClientService;
 import org.springframework.stereotype.Component;
-import org.example.cloudstorage.model.TraversalMode;
 
 import java.util.List;
 
-import static org.example.cloudstorage.utils.PathUtils.*;
+import static org.example.cloudstorage.utils.PathUtils.extractParentPath;
+import static org.example.cloudstorage.utils.PathUtils.extractResourceName;
 import static org.example.cloudstorage.validation.PathAndNameValidator.isPathValidToMove;
 import static org.example.cloudstorage.validation.PathAndNameValidator.validateResourceName;
 
@@ -56,8 +57,8 @@ public class MoveOperationValidator {
     }
 
     private void validatePathsExistence(Long id, String currentPath, String newPath) {
-        String parentCurrentPath = buildParentPath(currentPath);
-        String parentNewPath = buildParentPath(newPath);
+        String parentCurrentPath = extractParentPath(currentPath);
+        String parentNewPath = extractParentPath(newPath);
 
         if (!minioClientService.isPathExists(id, parentCurrentPath)) {
             throw new ResourceNotFoundException("Current path with this name not found");
@@ -72,9 +73,9 @@ public class MoveOperationValidator {
         }
     }
 
-    private void validateMoveRules(String currentPath, String newPath){
-        String parentCurrentPath = buildParentPath(currentPath);
-        String parentNewPath = buildParentPath(newPath);
+    private void validateMoveRules(String currentPath, String newPath) {
+        String parentCurrentPath = extractParentPath(currentPath);
+        String parentNewPath = extractParentPath(newPath);
 
         if (!parentCurrentPath.equals(parentNewPath)) {
             String currentResourceName = extractResourceName(currentPath, false);
@@ -91,8 +92,8 @@ public class MoveOperationValidator {
         }
     }
 
-    private void validateResourceExistence(Long id, String newPath){
-        String parentNewPath = buildParentPath(newPath);
+    private void validateResourceExistence(Long id, String newPath) {
+        String parentNewPath = extractParentPath(newPath);
 
         if (isResourceExists(id, parentNewPath, newPath)) {
             throw new ResourceExistsException("Resource with this name already exists");
@@ -116,10 +117,7 @@ public class MoveOperationValidator {
         if (path.endsWith("/")) {
             return true;
         }
-        if (parentPath.equals("") && path.endsWith("/")) {
-            return true;
-        }
-        return false;
+        return parentPath.isEmpty() && path.endsWith("/");
     }
 
 }

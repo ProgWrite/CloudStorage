@@ -43,6 +43,6 @@ public interface UserApi {
             )
     }
     )
-    ResponseEntity<Map<String,String>> getCurrentUser(Authentication authentication);
+    ResponseEntity<Map<String, String>> getCurrentUser(Authentication authentication);
 
 }

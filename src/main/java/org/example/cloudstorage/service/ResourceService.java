@@ -4,6 +4,7 @@ import io.minio.Result;
 import io.minio.StatObjectResponse;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.IOUtils;
 import org.example.cloudstorage.model.ResourceType;
 import org.example.cloudstorage.dto.resourceResponseDto.FileResponseDto;
@@ -32,20 +33,24 @@ import java.util.zip.ZipOutputStream;
 import static org.example.cloudstorage.utils.PathUtils.*;
 import static org.example.cloudstorage.validation.PathAndNameValidator.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ResourceService {
 
     private final MinioClientService minioClientService;
     private final DirectoryService directoryService;
+    private final StoragePathService storagePathService;
+    private final FileSystemMapper fileSystemMapper;
     private final MoveOperationValidator moveOperationValidator;
+
     private static final int BUFFER_SIZE_1KB = 1024;
     private static final int START_OF_BUFFER = 0;
     private static final int END_OF_INPUT_STREAM = -1;
     private static final String ROOT_PATH = "";
 
     public ResourceResponseDto getResourceInfo(Long id, String path) {
-        String parentPath = buildParentPath(path);
+        String parentPath = extractParentPath(path);
 
         if (path.equals(ROOT_PATH) || path.contains("//")) {
             throw new InvalidPathException("Invalid path");
@@ -53,7 +58,7 @@ public class ResourceService {
 
         if (minioClientService.isPathExists(id, parentPath)) {
             return minioClientService.statObject(id, path)
-                    .map(object -> FileSystemMapper.INSTANCE.statObjectToDto(object, id))
+                    .map(object -> fileSystemMapper.statObjectToDto(object, id, storagePathService))
                     .orElseThrow(() -> new ResourceNotFoundException("Resource not found"));
         }
 
@@ -147,10 +152,7 @@ public class ResourceService {
     private boolean isFileExists(Long id, String path) {
         Optional<StatObjectResponse> existingFile = minioClientService.statObject(id, path);
 
-        if (existingFile.isPresent()) {
-            return true;
-        }
-        return false;
+        return existingFile.isPresent();
     }
 
     private List<ResourceResponseDto> getUploadedFiles(MultipartFile[] files, Long id, String path) {
@@ -237,8 +239,9 @@ public class ResourceService {
                     outputStream.write(data, START_OF_BUFFER, bytesRead);
                 }
             } catch (IOException e) {
+                log.warn("File download failed for user {} path: {}", id, path, e);
                 throw new FileDownloadException(
-                        String.format("Failed to download file in path: '%s' for user %d", path, id)
+                        String.format("Failed to download file in path: '%s' for user %d", path, id, e)
                 );
             }
         };
@@ -254,7 +257,7 @@ public class ResourceService {
 
     private void buildZipFromItems(OutputStream output, String path, Long id, List<Item> items) throws IOException {
         try (ZipOutputStream zip = new ZipOutputStream(output)) {
-            String parentPath = buildParentPath(path);
+            String parentPath = extractParentPath(path);
             Path parentDirectory = Paths.get(parentPath);
 
             for (Item item : items) {
@@ -262,8 +265,8 @@ public class ResourceService {
                     continue;
                 }
 
-                String pathWithoutRoot = deleteRootPath(item.objectName(), id);
-                String relativePath = getRelativePath(pathWithoutRoot, parentDirectory);
+                String pathWithoutRoot = storagePathService.deleteRootPath(item.objectName(), id);
+                String relativePath = convertToRelativePath(pathWithoutRoot, parentDirectory);
 
                 zip.putNextEntry(new ZipEntry(relativePath));
 
@@ -285,7 +288,7 @@ public class ResourceService {
         delete(id, currentPath);
 
         return new FileResponseDto(
-                buildParentPath(newPath),
+                extractParentPath(newPath),
                 fileName,
                 size,
                 ResourceType.FILE
@@ -312,7 +315,7 @@ public class ResourceService {
         }
 
         for (Item item : items) {
-            String relativeResourcePath = buildRelativeResourcePath(item, currentPath, id);
+            String relativeResourcePath = storagePathService.buildRelativePathFromMinioItem(item, currentPath, id);
             String fullCurrentPath = currentPath + relativeResourcePath;
             String fullNewPath = newPath + relativeResourcePath;
             minioClientService.copyObject(id, fullCurrentPath, fullNewPath);
@@ -320,7 +323,7 @@ public class ResourceService {
         delete(id, currentPath);
 
         return new FolderResponseDto(
-                buildParentPath(newPath),
+                extractParentPath(newPath),
                 folderName,
                 ResourceType.DIRECTORY
         );
@@ -334,6 +337,11 @@ public class ResourceService {
 
         MultipartFile file = files[0];
         String fileName = file.getOriginalFilename();
+
+        if (fileName == null || fileName.isEmpty()) {
+            return false;
+        }
+
         String folderName = fileName.substring(0, fileName.indexOf("/") + 1);
 
         Iterable<Result<Item>> minioObjects = minioClientService.getListObjects(id, path, TraversalMode.NON_RECURSIVE);
@@ -341,7 +349,7 @@ public class ResourceService {
 
         for (Item item : items) {
             String objectName = item.objectName();
-            boolean isTrailingSlash = objectName.endsWith("/") || objectName.equals("");
+            boolean isTrailingSlash = objectName.endsWith("/") || objectName.isEmpty();
             String resourceName = extractResourceName(objectName, isTrailingSlash);
             if (resourceName.equals(folderName)) {
                 return true;
@@ -354,12 +362,12 @@ public class ResourceService {
         List<ResourceResponseDto> queryResults = new ArrayList<>();
 
         for (Item item : items) {
-            String relativePath = deleteRootPath(item.objectName(), id);
-            boolean isTrailingSlash = relativePath.endsWith("/") || relativePath.equals("");
+            String relativePath = storagePathService.deleteRootPath(item.objectName(), id);
+            boolean isTrailingSlash = relativePath.endsWith("/") || relativePath.isEmpty();
             String resourceName = extractResourceName(relativePath, isTrailingSlash);
 
             if (resourceName.toLowerCase().contains(query.toLowerCase())) {
-                String parentPath = buildParentPath(relativePath);
+                String parentPath = extractParentPath(relativePath);
 
                 if (resourceName.endsWith("/")) {
                     queryResults.add(new FolderResponseDto(

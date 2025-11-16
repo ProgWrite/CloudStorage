@@ -5,12 +5,12 @@ import org.example.cloudstorage.dto.userDto.UserResponseDto;
 import org.example.cloudstorage.model.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.factory.Mappers;
+import org.mapstruct.MappingConstants;
 
-@Mapper
+
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface UserMapper {
 
-    UserMapper INSTANCE = Mappers.getMapper(UserMapper.class);
 
     @Mapping(target = "id", ignore = true)
     User toEntity(UserRegistrationRequestDto userRegistrationRequestDto);

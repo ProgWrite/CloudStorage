@@ -5,10 +5,10 @@ import io.minio.errors.MinioException;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.example.cloudstorage.exception.MinioOperationException;
+import org.example.cloudstorage.model.TraversalMode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.example.cloudstorage.model.TraversalMode;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -16,12 +16,14 @@ import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.util.Optional;
 
-import static org.example.cloudstorage.utils.PathUtils.buildRootPath;
 
 @Service
 @RequiredArgsConstructor
 public class MinioClientService {
+
     private final MinioClient minioClient;
+    private final StoragePathService storagePathService;
+
     private static final ByteArrayInputStream EMPTY_STREAM = new ByteArrayInputStream(new byte[]{});
     private static final Long EMPTY_FOLDER_SIZE = 0L;
     private static final int AUTO_PART_SIZE = -1;
@@ -34,7 +36,7 @@ public class MinioClientService {
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(bucketName)
-                            .object(buildRootPath(id))
+                            .object(storagePathService.buildRootPath(id))
                             .stream(EMPTY_STREAM, EMPTY_FOLDER_SIZE, AUTO_PART_SIZE)
                             .contentType(DEFAULT_CONTENT_TYPE)
                             .build()
@@ -42,7 +44,7 @@ public class MinioClientService {
         } catch (IOException | GeneralSecurityException | MinioException exception) {
             throw new MinioOperationException(
                     String.format("Failed to create root directory '%s' for user %d in bucket '%s'",
-                            buildRootPath(id), id, bucketName)
+                            storagePathService.buildRootPath(id), id, bucketName), exception
             );
         }
     }
@@ -52,14 +54,14 @@ public class MinioClientService {
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(bucketName)
-                            .object(buildRootPath(id) + path)
+                            .object(storagePathService.buildRootPath(id) + path)
                             .stream(EMPTY_STREAM, EMPTY_FOLDER_SIZE, AUTO_PART_SIZE)
                             .build()
             );
         } catch (IOException | GeneralSecurityException | MinioException exception) {
             throw new MinioOperationException(
                     String.format("Failed to create directory in path: %s for user %d in bucket '%s'",
-                            buildRootPath(id) + path, id, bucketName)
+                            storagePathService.buildRootPath(id) + path, id, bucketName), exception
             );
         }
     }
@@ -69,7 +71,7 @@ public class MinioClientService {
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(bucketName)
-                            .object(buildRootPath(id) + path + file.getOriginalFilename())
+                            .object(storagePathService.buildRootPath(id) + path + file.getOriginalFilename())
                             .stream(file.getInputStream(), file.getSize(), AUTO_PART_SIZE)
                             .contentType(file.getContentType())
                             .build()
@@ -77,7 +79,7 @@ public class MinioClientService {
         } catch (IOException | GeneralSecurityException | MinioException exception) {
             throw new MinioOperationException(
                     String.format("Failed to create file in path: %s for user %d in bucket '%s'",
-                            buildRootPath(id) + path + file.getOriginalFilename(), id, bucketName)
+                            storagePathService.buildRootPath(id) + path + file.getOriginalFilename(), id, bucketName), exception
             );
         }
     }
@@ -87,7 +89,7 @@ public class MinioClientService {
 
         return minioClient.listObjects(ListObjectsArgs.builder()
                 .bucket(bucketName)
-                .prefix(buildRootPath(id) + path)
+                .prefix(storagePathService.buildRootPath(id) + path)
                 .recursive(searchType)
                 .build());
     }
@@ -97,7 +99,7 @@ public class MinioClientService {
             return Optional.of(minioClient.statObject(
                     StatObjectArgs.builder()
                             .bucket(bucketName)
-                            .object(buildRootPath(id) + path)
+                            .object(storagePathService.buildRootPath(id) + path)
                             .build()));
         } catch (Exception exception) {
             return Optional.empty();
@@ -109,12 +111,12 @@ public class MinioClientService {
             minioClient.removeObject(
                     RemoveObjectArgs.builder()
                             .bucket(bucketName)
-                            .object(buildRootPath(id) + path)
+                            .object(storagePathService.buildRootPath(id) + path)
                             .build());
         } catch (IOException | GeneralSecurityException | MinioException exception) {
             throw new MinioOperationException(
                     String.format("Failed to delete object in path: %s for user %d in bucket '%s'",
-                            buildRootPath(id), id, bucketName)
+                            storagePathService.buildRootPath(id), id, bucketName), exception
             );
         }
 
@@ -125,13 +127,13 @@ public class MinioClientService {
             return minioClient.getObject(
                     GetObjectArgs.builder()
                             .bucket(bucketName)
-                            .object(buildRootPath(id) + path)
+                            .object(storagePathService.buildRootPath(id) + path)
                             .build()
             );
         } catch (Exception exception) {
             throw new MinioOperationException(
                     String.format("Failed to find object in path: %s for user %d in bucket '%s'",
-                            buildRootPath(id), id, bucketName)
+                            storagePathService.buildRootPath(id), id, bucketName), exception
             );
         }
     }
@@ -139,7 +141,7 @@ public class MinioClientService {
     public boolean isPathExists(Long id, String path) {
         Iterable<Result<Item>> results = minioClient.listObjects(ListObjectsArgs.builder()
                 .bucket(bucketName)
-                .prefix(buildRootPath(id) + path)
+                .prefix(storagePathService.buildRootPath(id) + path)
                 .build()
         );
         return results.iterator().hasNext();
@@ -150,17 +152,17 @@ public class MinioClientService {
             minioClient.copyObject(
                     CopyObjectArgs.builder()
                             .bucket(bucketName)
-                            .object(buildRootPath(id) + newPath)
+                            .object(storagePathService.buildRootPath(id) + newPath)
                             .source(
                                     CopySource.builder()
                                             .bucket(bucketName)
-                                            .object(buildRootPath(id) + currentPath)
+                                            .object(storagePathService.buildRootPath(id) + currentPath)
                                             .build())
                             .build());
         } catch (Exception exception) {
             throw new MinioOperationException(
                     String.format("Failed to copy object from current path: %s to new path: %s for user %d in bucket '%s'",
-                            currentPath, newPath, id, bucketName)
+                            currentPath, newPath, id, bucketName), exception
             );
         }
 
