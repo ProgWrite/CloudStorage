@@ -4,7 +4,7 @@ import org.example.cloudstorage.exception.InvalidPathException;
 
 public class PathAndNameValidator {
     private final static int MIN_FOLDER_NAME_LENGTH = 3;
-    private final static int MAX_FOLDER_NAME_LENGTH = 20;
+    private final static int MAX_FOLDER_NAME_LENGTH = 150;
     private static final int UPLOADED_RESOURCE_NAME_MAX_LENGTH = 150;
 
 
