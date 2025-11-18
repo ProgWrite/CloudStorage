@@ -6,7 +6,6 @@ import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.IOUtils;
-import org.example.cloudstorage.model.ResourceType;
 import org.example.cloudstorage.dto.resourceResponseDto.FileResponseDto;
 import org.example.cloudstorage.dto.resourceResponseDto.FolderResponseDto;
 import org.example.cloudstorage.dto.resourceResponseDto.ResourceResponseDto;
@@ -15,11 +14,12 @@ import org.example.cloudstorage.exception.InvalidPathException;
 import org.example.cloudstorage.exception.ResourceExistsException;
 import org.example.cloudstorage.exception.ResourceNotFoundException;
 import org.example.cloudstorage.mapper.FileSystemMapper;
+import org.example.cloudstorage.model.ResourceType;
+import org.example.cloudstorage.model.TraversalMode;
 import org.example.cloudstorage.validation.MoveOperationValidator;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
-import org.example.cloudstorage.model.TraversalMode;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -388,6 +388,5 @@ public class ResourceService {
         }
         return queryResults;
     }
-
 
 }

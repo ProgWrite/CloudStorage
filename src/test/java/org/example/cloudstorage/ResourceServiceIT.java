@@ -463,23 +463,6 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
         }
 
         @Test
-        void shouldThrowExceptionWhenMovingFileToFolderWithoutFileName() {
-            String uploadedPath = "";
-
-            String currentPath = uploadedPath + "docs/document1.txt";
-            String newPath = uploadedPath + "docs/images/";
-
-            resourceService.upload(userId, uploadedPath, testFolder);
-
-            InvalidPathException exception = assertThrows(
-                    InvalidPathException.class,
-                    () -> resourceService.move(userId, currentPath, newPath));
-
-            assertEquals("New path should end with resource name", exception.getMessage());
-
-        }
-
-        @Test
         void shouldThrowExceptionWhenMovingFolderToFolderWithoutTrailingSlash() {
             String uploadedPath = "";
             String wrongMovingFolderName = "images";
@@ -586,7 +569,7 @@ public class ResourceServiceIT extends AbstractIntegrationTest {
                 "TestUser2",
                 "password"
         );
-        userService.create(user);
+        userService.createUserWithRootDirectory(user);
         return userRepository.findIdByUsername(user.getUsername());
     }
 

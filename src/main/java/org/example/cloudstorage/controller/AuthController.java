@@ -50,7 +50,7 @@ public class AuthController implements AuthApi {
                                                   HttpServletResponse response) {
 
         log.info("Attempting registration for user: {}", user.getUsername());
-        UserResponseDto userDto = userService.create(user);
+        UserResponseDto userDto = userService.createUserWithRootDirectory(user);
         authenticateUser(user.getUsername(), user.getPassword(), request, response);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(userDto);

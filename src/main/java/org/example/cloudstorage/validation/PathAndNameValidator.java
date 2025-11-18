@@ -3,9 +3,10 @@ package org.example.cloudstorage.validation;
 import org.example.cloudstorage.exception.InvalidPathException;
 
 public class PathAndNameValidator {
-    private final static int MIN_FOLDER_NAME_LENGTH = 3;
-    private final static int MAX_FOLDER_NAME_LENGTH = 150;
-    private static final int UPLOADED_RESOURCE_NAME_MAX_LENGTH = 150;
+
+    private final static int MIN_FOLDER_NAME_LENGTH = 1;
+    private final static int MAX_FOLDER_NAME_LENGTH = 255;
+    private static final int UPLOADED_RESOURCE_NAME_MAX_LENGTH = 255;
 
 
     public static void validateResourceName(String folderName) {

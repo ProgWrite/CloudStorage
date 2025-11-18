@@ -91,7 +91,7 @@ public abstract class AbstractIntegrationTest {
                 "password"
         );
 
-        userService.create(user);
+        userService.createUserWithRootDirectory(user);
         return userRepository.findIdByUsername(user.getUsername());
     }
 

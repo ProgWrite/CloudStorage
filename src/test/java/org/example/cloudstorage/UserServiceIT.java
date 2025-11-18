@@ -27,7 +27,7 @@ public class UserServiceIT extends AbstractIntegrationTest {
         Set<ConstraintViolation<UserRegistrationRequestDto>> violations = validator.validate(user);
 
         assertTrue(violations.isEmpty());
-        UserResponseDto result = userService.create(user);
+        UserResponseDto result = userService.createUserWithRootDirectory(user);
         assertNotNull(result);
         assertEquals("Dimka", result.username());
     }
@@ -35,12 +35,12 @@ public class UserServiceIT extends AbstractIntegrationTest {
     @Test
     void ShouldThrowUserExistsException() {
         UserRegistrationRequestDto firstUser = new UserRegistrationRequestDto("Dima", "pass");
-        userService.create(firstUser);
+        userService.createUserWithRootDirectory(firstUser);
 
         UserRegistrationRequestDto secondUser = new UserRegistrationRequestDto("Dima", "pass1");
 
         assertThrows(UserExistsException.class, () -> {
-            userService.create(secondUser);
+            userService.createUserWithRootDirectory(secondUser);
         });
     }
 
@@ -69,7 +69,7 @@ public class UserServiceIT extends AbstractIntegrationTest {
     void shouldLoadUserByUsername() {
         UserRegistrationRequestDto user = new UserRegistrationRequestDto(
                 "Dimka", "password");
-        userService.create(user);
+        userService.createUserWithRootDirectory(user);
 
         UserDetails result = userService.loadUserByUsername(user.getUsername());
 
@@ -81,7 +81,7 @@ public class UserServiceIT extends AbstractIntegrationTest {
     void shouldThrowBadCredentialsException() {
         UserRegistrationRequestDto user = new UserRegistrationRequestDto(
                 "Dimka", "password");
-        userService.create(user);
+        userService.createUserWithRootDirectory(user);
 
         assertThrows(BadCredentialsException.class, () -> {
             userService.loadUserByUsername("Pavel");
@@ -92,7 +92,7 @@ public class UserServiceIT extends AbstractIntegrationTest {
     @Test
     void passwordShouldBeEncoded() {
         UserRegistrationRequestDto user = new UserRegistrationRequestDto("Dimka", "password");
-        userService.create(user);
+        userService.createUserWithRootDirectory(user);
 
         UserDetails result = userService.loadUserByUsername(user.getUsername());
         assertNotNull(result);

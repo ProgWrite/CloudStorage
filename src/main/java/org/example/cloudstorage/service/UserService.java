@@ -40,7 +40,7 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
-    public UserResponseDto create(UserRegistrationRequestDto userDto) {
+    public UserResponseDto createUserWithRootDirectory(UserRegistrationRequestDto userDto) {
         try {
             User user = createUser(userDto);
 
