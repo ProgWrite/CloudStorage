@@ -1,37 +1,39 @@
 # Cloud File Storage 🗂️☁️
-Многопользовательское облачное хранилище файлов. Позволяет пользователям безопасно загружать, хранить, управлять и скачивать свои файлы и папки через удобный веб-интерфейс.
-## 🚀 Основной функционал
+A multi-user cloud file storage solution. Allows users to securely upload, store, manage, and download their files and folders through a convenient web interface.
+## 🚀 Core Features
 
-### 👥 Управление пользователями
-- **Регистрация** нового аккаунта
-- **Авторизация** в системе
-- **Logout** (выход из системы)
+### 👥 User Management
+- **Registration** of new accounts
+- **Authorization** in the system
+- **Logout** from the system
 
-### 📁 Управление файлами и папками
-- **Загрузка (Upload)** файлов и целых папок
-- **Создание** новых пустых папок
-- **Удаление** файлов и папок
-- **Переименование** и **перемещение** элементов
-- **Скачивание** файлов и папок (в виде zip-архива)
+### 📁 File and Folder Management
+- **Upload** of files and entire folders
+- **Create** new empty folders
+- **Delete** files and folders
+- **Rename** and **move** elements
+- **Download** files and folders (as zip archives)
 
-## 🚀 Инструкция по запуску
+## 🚀 Quick Start Guide
 
-1. **Клонируйте репозиторий**
-2. Скопируйте файл .env.example в .env
-3. Отредактируйте .env файл, подставив свои значения.
-4. Запустите приложение: docker-compose up -d
-После успешного запуска сервисы будут доступны по следующим адресам:
-- Основное приложение: http://localhost:8080
-- MinIO Console http://localhost:9001
-- PostgreSQL	localhost:5432
-- Redis	localhost:6379
-5. После первого запуска необходимо настроить бакет в MinIO:
-- Откройте MinIO Console: http://localhost:9001
-- Войдите с данными из .env файла (MINIO_USER и MINIO_PASSWORD)
-- Создайте бакет с именем, указанным в MINIO_BUCKET_NAME
+1. Clone the repository
+2. Copy the `.env.example` file to `.env`
+3. Edit the `.env` file with your values
+4. Start the application by running the command: `docker-compose up`
+   - After successful startup, services will be available at the following addresses:
+   - Main application: http://localhost:8080
+   - MinIO Console: http://localhost:9001
+   - PostgreSQL: localhost:5432
+   - Redis: localhost:6379
+5. After the first launch, configure the bucket in MinIO:
+   - Open MinIO Console: http://localhost:9001
+   - Log in with credentials from the `.env` file (MINIO_USER and MINIO_PASSWORD)
+   - Create a bucket with the name specified in MINIO_BUCKET_NAME
 
-**Лимит загрузки:** 500 МБ на один запрос.
-- **🌐 Деплой**: [http://176.123.165.134:8080/](http://176.123.165.134:8080/)
+**Upload limit:** 500 MB per request
+## 🔗 Live Deployment
+
+- **🌐 Live Demo**: [http://176.123.165.134:8080/](http://176.123.165.134:8080/)
 - **📚 API Documentation**: [Swagger UI](http://176.123.165.134:8080/swagger-ui/index.html#/)
 
   
